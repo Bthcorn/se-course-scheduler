@@ -1,4 +1,8 @@
-from se_course_scheduler import CourseScheduler
+"""
+Main module for the SE Course Scheduler
+"""
+
+from .se_course_scheduler import CourseScheduler
 
 
 def main():
@@ -9,7 +13,14 @@ def main():
     print("=" * 80 + "\n")
 
     # Initialize scheduler
-    scheduler = CourseScheduler("../data/scheduler.pl")
+    # Determine the correct path to scheduler.pl
+    import os
+
+    current_file_path = os.path.abspath(__file__)
+    project_root = os.path.dirname(os.path.dirname(current_file_path))
+    prolog_path = os.path.join(project_root, "data", "scheduler.pl")
+
+    scheduler = CourseScheduler(prolog_path)
 
     # Option 1: Use built-in data from Prolog file
     print("\n[Using built-in Prolog data]")
@@ -28,7 +39,7 @@ def main():
 
     # Validate schedule
     print("\nValidating schedule...")
-    scheduler.validate_schedule()
+    _ = scheduler.validate_schedule()
 
     # Print summary
     scheduler.print_schedule_summary()

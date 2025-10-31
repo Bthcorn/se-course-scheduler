@@ -15,8 +15,7 @@ se-course-scheduler/
 │   └── main.py                    # CLI entry point
 ├── web/                          # Web application
 │   ├── __init__.py
-│   ├── streamlit_app.py          # Streamlit web app
-│   └── run_streamlit.py          # Web app launcher
+│   └── streamlit_app.py          # Streamlit web app
 ├── data/                         # Data files
 │   ├── scheduler.pl              # Prolog knowledge base
 │   └── generated_schedule.xlsx   # Generated schedules
@@ -46,8 +45,6 @@ se-course-scheduler/
 ### Web Application (`web/`)
 
 - **`streamlit_app.py`**: Complete Streamlit web interface
-- **`run_streamlit.py`**: Web app launcher with path setup
-
 ### Data Files (`data/`)
 
 - **`scheduler.pl`**: Prolog knowledge base with scheduling rules
@@ -63,8 +60,6 @@ se-course-scheduler/
 
 ```bash
 python run_web_app.py
-# or
-cd web && python run_streamlit.py
 ```
 
 ### CLI Application

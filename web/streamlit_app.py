@@ -5,20 +5,11 @@ A comprehensive web interface for course scheduling using Prolog
 
 from datetime import datetime
 import os
-import sys
-from typing import Any, Dict, List
+from typing import Any
 import streamlit as st
 import pandas as pd
-import plotly.express as px  # type: ignore[import-not-found]
-
-# Add the src directory to Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)
-src_path = os.path.join(project_root, "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-from se_course_scheduler import CourseScheduler
+import plotly.express as px  # pyright: ignore[reportMissingTypeStubs]
+from src.se_course_scheduler import CourseScheduler
 
 
 # Page configuration
@@ -61,27 +52,29 @@ st.markdown(
 </style>
 """,
     unsafe_allow_html=True,
-)
+)  # pyright: ignore[reportUnusedCallResult]
 
 
-@st.cache_resource
 def initialize_scheduler():
-    """Initialize the course scheduler with caching"""
+    """Initialize the course scheduler"""
     try:
-        # Get the correct path to the Prolog file
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        prolog_file = os.path.join(project_root, "data", "scheduler.pl")
-        scheduler = CourseScheduler(prolog_file)
+        # Determine the correct path to scheduler.pl from any working directory
+        import os
+
+        current_file_path = os.path.abspath(__file__)
+        project_root = os.path.dirname(os.path.dirname(current_file_path))
+        prolog_path = os.path.join(project_root, "data", "scheduler.pl")
+
+        scheduler = CourseScheduler(prolog_path)
         return scheduler, None
-    except (ImportError, FileNotFoundError, RuntimeError) as e:
-        return None, str(e)
+    except Exception as e:
+        return None, f"Failed to initialize scheduler: {str(e)}"
 
 
-def display_schedule_table(schedule: List[Dict[str, str]], title: str = "Schedule"):
+def display_schedule_table(schedule: list[dict[str, str]], title: str = "Schedule"):
     """Display schedule in a formatted table"""
     if not schedule:
-        st.warning(f"No {title.lower()} found.")
+        st.warning(f"No {title.lower()} found.")  # pyright: ignore[reportUnusedCallResult]
         return
 
     df = pd.DataFrame(schedule)
@@ -104,7 +97,7 @@ def display_schedule_table(schedule: List[Dict[str, str]], title: str = "Schedul
         st.dataframe(df[display_columns], width="stretch")
 
 
-def create_room_utilization_chart(stats: Dict[str, Any]):
+def create_room_utilization_chart(stats: dict[str, Any]) -> None:
     """Create room utilization chart"""
     if not stats.get("room_utilization"):
         return None
@@ -129,10 +122,10 @@ def create_room_utilization_chart(stats: Dict[str, Any]):
         xaxis_title="Room", yaxis_title="Utilization (%)", showlegend=False
     )
 
-    return fig
+    st.plotly_chart(fig, use_container_width=True)
 
 
-def create_professor_workload_chart(stats: Dict[str, Any]):
+def create_professor_workload_chart(stats: dict[str, Any]) -> None:
     """Create professor workload chart"""
     if not stats.get("professor_workload"):
         return None
@@ -162,14 +155,14 @@ def create_professor_workload_chart(stats: Dict[str, Any]):
         xaxis_title="Professor", yaxis_title="Number of Courses", showlegend=False
     )
 
-    return fig
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def main():
     """Main Streamlit application"""
 
     # Header
-    st.markdown(
+    _ = st.markdown(
         '<h1 class="main-header">📚 SE Course Scheduler</h1>', unsafe_allow_html=True
     )
 
@@ -177,11 +170,11 @@ def main():
     scheduler, error = initialize_scheduler()
 
     if error:
-        st.error(f"Failed to initialize scheduler: {error}")
+        _ = st.error(f"Failed to initialize scheduler: {error}")
         st.stop()
 
     # Sidebar navigation
-    st.sidebar.title("Navigation")
+    _ = st.sidebar.title("Navigation")
 
     # Navigation buttons
     if st.sidebar.button("🏠 Dashboard", use_container_width=True):
@@ -213,15 +206,15 @@ def main():
 
     # Dashboard Page
     if page == "🏠 Dashboard":
-        st.header("Dashboard")
+        _ = st.header("Dashboard")
 
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Scheduled Courses", len(st.session_state.current_schedule))
+            _ = st.metric("Scheduled Courses", len(st.session_state.current_schedule))
 
         with col2:
-            st.metric("Reserved Slots", len(st.session_state.current_reserved))
+            _ = st.metric("Reserved Slots", len(st.session_state.current_reserved))
 
         with col3:
             total_rooms = len(
@@ -233,7 +226,7 @@ def main():
                     ]
                 )
             )
-            st.metric("Active Rooms", total_rooms)
+            _ = st.metric("Active Rooms", total_rooms)
 
         with col4:
             if st.session_state.current_stats.get("scheduled_courses", 0) > 0:
@@ -241,9 +234,9 @@ def main():
                     len(st.session_state.current_schedule)
                     / st.session_state.current_stats["scheduled_courses"]
                 ) * 100
-                st.metric("Success Rate", f"{success_rate:.1f}%")
+                _ = st.metric("Success Rate", f"{success_rate:.1f}%")
             else:
-                st.metric("Success Rate", "N/A")
+                _ = st.metric("Success Rate", "N/A")
 
         # Quick actions
         st.subheader("Quick Actions")
@@ -252,6 +245,12 @@ def main():
 
         with col1:
             if st.button("🔄 Schedule All Courses", type="primary"):
+                if scheduler is None:
+                    _ = st.error(
+                        "Scheduler is not initialized. Please refresh the page."
+                    )
+                    st.stop()
+
                 with st.spinner("Scheduling courses..."):
                     result = scheduler.schedule_all_courses()
                     st.session_state.schedule_generated = True
@@ -260,48 +259,59 @@ def main():
                     st.session_state.current_stats = scheduler.get_statistics()
 
                     if result["scheduled"]:
-                        st.success(
+                        _ = st.success(
                             f"Successfully scheduled {len(result['scheduled'])} courses!"
                         )
                     if result["failed"]:
-                        st.warning(
+                        _ = st.warning(
                             f"Failed to schedule {len(result['failed'])} courses: {', '.join(result['failed'])}"
                         )
 
         with col2:
             if st.button("🗑️ Clear Schedule"):
+                if scheduler is None:
+                    _ = st.error(
+                        "Scheduler is not initialized. Please refresh the page."
+                    )
+                    st.stop()
+
                 scheduler.clear_schedule()
                 st.session_state.schedule_generated = False
                 st.session_state.current_schedule = []
                 st.session_state.current_reserved = []
                 st.session_state.current_stats = {}
-                st.success("Schedule cleared!")
+                _ = st.success("Schedule cleared!")
 
         with col3:
             if st.button("✅ Validate Schedule"):
+                if scheduler is None:
+                    _ = st.error(
+                        "Scheduler is not initialized. Please refresh the page."
+                    )
+                    st.stop()
                 if scheduler.validate_schedule():
-                    st.success("Schedule validation passed - No conflicts found!")
+                    _ = st.success("Schedule validation passed - No conflicts found!")
                 else:
-                    st.error("Schedule validation failed - Conflicts detected!")
+                    _ = st.error("Schedule validation failed - Conflicts detected!")
 
         # Recent schedule preview
         if st.session_state.current_schedule:
-            st.subheader("Recent Schedule Preview")
+            _ = st.subheader("Recent Schedule Preview")
             display_schedule_table(
                 st.session_state.current_schedule[:10], "Recent Schedule"
             )
 
             if len(st.session_state.current_schedule) > 10:
-                st.info(
+                _ = st.info(
                     f"Showing first 10 of {len(st.session_state.current_schedule)} scheduled courses. Use 'Schedule View' for complete details."
                 )
 
     # Schedule View Page
     elif page == "📊 Schedule View":
-        st.header("Schedule View")
+        _ = st.header("Schedule View")
 
         if not st.session_state.schedule_generated:
-            st.warning(
+            _ = st.warning(
                 "No schedule generated yet. Please schedule courses from the Dashboard."
             )
         else:
@@ -390,37 +400,37 @@ def main():
 
     # Statistics Page
     elif page == "📈 Statistics":
-        st.header("Statistics")
+        _ = st.header("Statistics")
 
         if not st.session_state.current_stats:
-            st.warning("No statistics available. Please generate a schedule first.")
+            _ = st.warning("No statistics available. Please generate a schedule first.")
         else:
             # Professor workload
-            st.subheader("Professor Workload")
+            _ = st.subheader("Professor Workload")
             workload_chart = create_professor_workload_chart(
                 st.session_state.current_stats
             )
             if workload_chart:
-                st.plotly_chart(workload_chart, use_container_width=True)
+                _ = st.plotly_chart(workload_chart, use_container_width=True)
             else:
-                st.info("No professor workload data available.")
+                _ = st.info("No professor workload data available.")
 
             # Room utilization
-            st.subheader("Room Utilization")
+            _ = st.subheader("Room Utilization")
             utilization_chart = create_room_utilization_chart(
                 st.session_state.current_stats
             )
             if utilization_chart:
-                st.plotly_chart(utilization_chart, use_container_width=True)
+                _ = st.plotly_chart(utilization_chart, use_container_width=True)
             else:
-                st.info("No room utilization data available.")
+                _ = st.info("No room utilization data available.")
 
             # Detailed statistics tables
             col1, col2 = st.columns(2)
 
             with col1:
                 if st.session_state.current_stats.get("professor_workload"):
-                    st.subheader("Professor Details")
+                    _ = st.subheader("Professor Details")
                     prof_df = pd.DataFrame(
                         st.session_state.current_stats["professor_workload"]
                     )
@@ -428,7 +438,7 @@ def main():
 
             with col2:
                 if st.session_state.current_stats.get("room_utilization"):
-                    st.subheader("Room Details")
+                    _ = st.subheader("Room Details")
                     room_df = pd.DataFrame(
                         st.session_state.current_stats["room_utilization"]
                     )
@@ -436,10 +446,10 @@ def main():
 
     # Settings Page
     elif page == "⚙️ Settings":
-        st.header("Settings")
+        _ = st.header("Settings")
 
         # Data upload section
-        st.subheader("Upload Data")
+        _ = st.subheader("Upload Data")
 
         uploaded_file = st.file_uploader(
             "Upload Excel file with course and professor data",
@@ -455,40 +465,48 @@ def main():
 
                 # Load data
                 with st.spinner("Loading data from Excel file..."):
+                    if scheduler is None:
+                        _ = st.error(
+                            "Scheduler is not initialized. Please refresh the page."
+                        )
+                        st.stop()
                     scheduler.load_all_data_from_excel("temp_upload.xlsx")
 
-                st.success("Data loaded successfully!")
+                _ = st.success("Data loaded successfully!")
 
                 # Clean up temp file
                 os.remove("temp_upload.xlsx")
 
             except (FileNotFoundError, KeyError, ValueError, ImportError) as e:
-                st.error(f"Error loading data: {str(e)}")
+                _ = st.error(f"Error loading data: {str(e)}")
 
         # System information
-        st.subheader("System Information")
-        st.info(
+        _ = st.subheader("System Information")
+        _ = st.info(
             "This system uses Prolog for course scheduling logic and supports Excel data import/export."
         )
 
         # Clear all data option
         if st.button("🗑️ Clear All Data", type="secondary"):
+            if scheduler is None:
+                _ = st.error("Scheduler is not initialized. Please refresh the page.")
+                st.stop()
             scheduler.clear_schedule()
             st.session_state.schedule_generated = False
             st.session_state.current_schedule = []
             st.session_state.current_reserved = []
             st.session_state.current_stats = {}
-            st.success("All data cleared!")
+            _ = st.success("All data cleared!")
 
     # Export Page
     elif page == "📤 Export":
-        st.header("Export Schedule")
+        _ = st.header("Export Schedule")
 
         if not st.session_state.schedule_generated:
-            st.warning("No schedule to export. Please generate a schedule first.")
+            _ = st.warning("No schedule to export. Please generate a schedule first.")
         else:
             # Export options
-            st.subheader("Export Options")
+            _ = st.subheader("Export Options")
 
             col1, col2 = st.columns(2)
 
@@ -506,11 +524,16 @@ def main():
                     if export_format == "Excel (.xlsx)":
                         # Generate Excel file
                         output_file = f"schedule_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                        if scheduler is None:
+                            _ = st.error(
+                                "Scheduler is not initialized. Please refresh the page."
+                            )
+                            st.stop()
                         scheduler.export_to_excel(output_file)
 
                         # Read the file and provide download
                         with open(output_file, "rb") as f:
-                            st.download_button(
+                            _ = st.download_button(
                                 label="Download Excel File",
                                 data=f.read(),
                                 file_name=output_file,
@@ -525,7 +548,7 @@ def main():
                         df = pd.DataFrame(st.session_state.current_schedule)
                         csv = df.to_csv(index=False)
 
-                        st.download_button(
+                        _ = st.download_button(
                             label="Download CSV File",
                             data=csv,
                             file_name=f"schedule_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
@@ -540,20 +563,20 @@ def main():
                             st.session_state.current_schedule, indent=2
                         )
 
-                        st.download_button(
+                        _ = st.download_button(
                             label="Download JSON File",
                             data=json_data,
                             file_name=f"schedule_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                             mime="application/json",
                         )
 
-                    st.success("Export generated successfully!")
+                    _ = st.success("Export generated successfully!")
 
                 except (FileNotFoundError, PermissionError, ValueError) as e:
-                    st.error(f"Error generating export: {str(e)}")
+                    _ = st.error(f"Error generating export: {str(e)}")
 
             # Preview data
-            st.subheader("Data Preview")
+            _ = st.subheader("Data Preview")
             if st.session_state.current_schedule:
                 st.dataframe(
                     pd.DataFrame(st.session_state.current_schedule),
