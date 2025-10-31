@@ -5,8 +5,10 @@ A comprehensive web interface for course scheduling using Prolog
 
 from datetime import datetime
 import os
+from pty import CHILD
 from typing import Any
 import streamlit as st
+import streamlit_shadcn_ui as ui
 import pandas as pd
 import plotly.express as px  # pyright: ignore[reportMissingTypeStubs]
 from src.se_course_scheduler import CourseScheduler
@@ -211,10 +213,20 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            _ = st.metric("Scheduled Courses", len(st.session_state.current_schedule))
+            ui.metric_card(
+                title="Scheduled Courses",
+                content=f"{len(st.session_state.current_schedule)}",
+                description="total scheduled courses",
+                key="schedule_count_card",
+            )
 
         with col2:
-            _ = st.metric("Reserved Slots", len(st.session_state.current_reserved))
+            ui.metric_card(
+                title="Reserved Slots",
+                content=f"{len(st.session_state.current_reserved)}",
+                description="total reserved slots",
+                key="reserved_count_card",
+            )
 
         with col3:
             total_rooms = len(
@@ -226,25 +238,42 @@ def main():
                     ]
                 )
             )
-            _ = st.metric("Active Rooms", total_rooms)
+
+            ui.metric_card(
+                title="Active Rooms",
+                content=f"{total_rooms}",
+                description="total active rooms",
+                key="active_rooms_card",
+            )
 
         with col4:
+            value = "N/A"
             if st.session_state.current_stats.get("scheduled_courses", 0) > 0:
                 success_rate = (
                     len(st.session_state.current_schedule)
                     / st.session_state.current_stats["scheduled_courses"]
                 ) * 100
-                _ = st.metric("Success Rate", f"{success_rate:.1f}%")
-            else:
-                _ = st.metric("Success Rate", "N/A")
+                value = f"{success_rate:.1f}%"
+
+            ui.metric_card(
+                title="Success Rate",
+                content=value,
+                description="success rate",
+                key="success_rate_card",
+            )
 
         # Quick actions
         st.subheader("Quick Actions")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3, gap="large")
 
         with col1:
-            if st.button("🔄 Schedule All Courses", type="primary"):
+            if ui.button(
+                key="schedule_courses_btn",
+                text="🔄 Schedule All Courses",
+                variant="default",
+                size="lg",
+            ):
                 if scheduler is None:
                     _ = st.error(
                         "Scheduler is not initialized. Please refresh the page."
@@ -267,8 +296,15 @@ def main():
                             f"Failed to schedule {len(result['failed'])} courses: {', '.join(result['failed'])}"
                         )
 
+                    st.rerun()
+
         with col2:
-            if st.button("🗑️ Clear Schedule"):
+            if ui.button(
+                key="clear_schedule_btn",
+                text="🗑️ Clear Schedule",
+                variant="destructive",
+                size="lg",
+            ):
                 if scheduler is None:
                     _ = st.error(
                         "Scheduler is not initialized. Please refresh the page."
@@ -282,8 +318,15 @@ def main():
                 st.session_state.current_stats = {}
                 _ = st.success("Schedule cleared!")
 
+                st.rerun()
+
         with col3:
-            if st.button("✅ Validate Schedule"):
+            if ui.button(
+                key="validate_btn",
+                text="✅ Validate Schedule",
+                variant="outline",
+                size="lg",
+            ):
                 if scheduler is None:
                     _ = st.error(
                         "Scheduler is not initialized. Please refresh the page."
