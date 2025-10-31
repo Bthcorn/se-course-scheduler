@@ -13,14 +13,25 @@ room(cb201, 50).
 % Define time slots: time_slot(Day, Period, TimeRange)
 time_slot(monday, morning, '09:00-12:00').
 time_slot(monday, afternoon, '13:00-16:00').
+time_slot(monday, evening, '17:00-20:00').
 time_slot(tuesday, morning, '09:00-12:00').
 time_slot(tuesday, afternoon, '13:00-16:00').
+time_slot(tuesday, evening, '17:00-20:00').
 time_slot(wednesday, morning, '09:00-12:00').
 time_slot(wednesday, afternoon, '13:00-16:00').
+time_slot(wednesday, evening, '17:00-20:00').
 time_slot(thursday, morning, '09:00-12:00').
 time_slot(thursday, afternoon, '13:00-16:00').
+time_slot(thursday, evening, '17:00-20:00').
 time_slot(friday, morning, '09:00-12:00').
 time_slot(friday, afternoon, '13:00-16:00').
+time_slot(friday, evening, '17:00-20:00').
+time_slot(saturday, morning, '09:00-12:00').
+time_slot(saturday, afternoon, '13:00-16:00').
+time_slot(saturday, evening, '17:00-20:00').
+time_slot(sunday, morning, '09:00-12:00').
+time_slot(sunday, afternoon, '13:00-16:00').
+time_slot(sunday, evening, '17:00-20:00').
 
 % Define courses: course(CourseID, CourseName, Year, RequiredCapacity, Prerequisites)
 course(cs101, 'Programming Fundamentals', 1, 35, []).

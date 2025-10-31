@@ -89,12 +89,6 @@ Launch the Streamlit web application:
 python run_web_app.py
 ```
 
-Or from the web directory:
-
-```bash
-cd web && python run_streamlit.py
-```
-
 The application will open in your default web browser at `http://localhost:8501`.
 
 ### Command Line Interface
@@ -195,8 +189,7 @@ se-course-scheduler/
 │   │   └── excel_handler.py       # Excel file operations
 │   └── main.py                    # CLI entry point
 ├── web/                          # Web application
-│   ├── streamlit_app.py          # Streamlit web app
-│   └── run_streamlit.py          # Web app launcher
+│   └── streamlit_app.py          # Streamlit web app
 ├── data/                         # Data files
 │   ├── scheduler.pl              # Prolog knowledge base
 │   └── generated_schedule.xlsx   # Generated schedules
