@@ -6,6 +6,8 @@ Handles all Excel file operations including loading data and exporting schedules
 from typing import Any
 import pandas as pd
 from pyswip import Prolog
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 
 class ExcelHandler:
@@ -117,10 +119,10 @@ class ExcelHandler:
                         "Scheduled Courses": len(room_schedule),
                         "Reserved Slots": len(room_reserved),
                         "Total Activities": len(room_schedule) + len(room_reserved),
-                        "Available Slots": 10 - len(room_reserved),
+                        "Available Slots": 21 - len(room_reserved),
                         "Utilization": (
-                            f"{(len(room_schedule) / (10 - len(room_reserved)) * 100):.1f}%"
-                            if (10 - len(room_reserved)) > 0
+                            f"{(len(room_schedule) / (21 - len(room_reserved)) * 100):.1f}%"
+                            if (21 - len(room_reserved)) > 0
                             else "N/A"
                         ),
                     }
@@ -135,17 +137,29 @@ class ExcelHandler:
                 room_reserved = [res for res in reserved if res["room"] == room]
 
                 # Create timetable table format with days as rows and time as columns
-                days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-                periods = ["09.00-12.00", "13.00-16.00"]
+                days = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                # Period headers with names matching HTML view
+                period_configs = [
+                    ("Morning (09:00-12:00)", "morning", "09.00-12.00"),
+                    ("Afternoon (13:00-16:00)", "afternoon", "13.00-16.00"),
+                    ("Evening (17:00-20:00)", "evening", "17.00-20.00"),
+                ]
 
                 # Create table data
                 table_data = []
                 for day in days:
                     day_lower = day.lower()
                     row = {"Day": day}
-                    for period_idx, period in enumerate(periods):
-                        period_lower = "morning" if period_idx == 0 else "afternoon"
-                        col_name = period
+                    for period_display, period_lower, period_key in period_configs:
+                        col_name = period_key
 
                         # Check if this slot is reserved
                         reserved_slot = next(
@@ -182,13 +196,57 @@ class ExcelHandler:
                 room_df = pd.DataFrame(table_data)
 
                 # Write to Excel with proper formatting
-                room_df.to_excel(writer, sheet_name=f"Room_{room.upper()}", index=False)
+                # Write DataFrame starting at row 2 (leaving row 1 for room header)
+                room_df.to_excel(
+                    writer,
+                    sheet_name=f"Room_{room.upper()}",
+                    index=False,
+                    startrow=1,  # Start at row 2 to leave space for header
+                )
                 # Get the workbook and worksheet for formatting
                 worksheet = writer.sheets[f"Room_{room.upper()}"]
+
+                # Add header row with room name (merged across all columns)
+                num_cols = len(period_configs) + 1  # Day column + period columns
+                header_col = get_column_letter(num_cols)
+                worksheet.merge_cells(f"A1:{header_col}1")
+                header_cell = worksheet["A1"]
+                header_cell.value = f"Room: {room.upper()}"
+                header_cell.font = Font(color="FFFFFF", bold=True, size=14)
+                header_cell.fill = PatternFill(
+                    start_color="1f77b4", end_color="1f77b4", fill_type="solid"
+                )
+                header_cell.alignment = Alignment(
+                    horizontal="center", vertical="center"
+                )
+                worksheet.row_dimensions[1].height = 30
+
+                # Update column headers to match HTML format (overwrite DataFrame headers)
+                headers = ["Day"] + [
+                    period_display for period_display, _, _ in period_configs
+                ]
+                for col_idx, header in enumerate(headers, start=1):
+                    cell = worksheet.cell(row=2, column=col_idx, value=header)
+                    cell.font = Font(bold=True, size=11)
+                    cell.fill = PatternFill(
+                        start_color="f0f2f6", end_color="f0f2f6", fill_type="solid"
+                    )
+                    cell.alignment = Alignment(
+                        horizontal="center" if col_idx > 1 else "left",
+                        vertical="center",
+                    )
+                    cell.border = Border(
+                        left=Side(style="thin"),
+                        right=Side(style="thin"),
+                        top=Side(style="thin"),
+                        bottom=Side(style="thin"),
+                    )
+
                 # Adjust column widths for better readability
                 worksheet.column_dimensions["A"].width = 15  # Day column
-                worksheet.column_dimensions["B"].width = 35  # 09.00-12.00 column
-                worksheet.column_dimensions["C"].width = 35  # 13.00-16.00 column
+                worksheet.column_dimensions["B"].width = 35  # Morning column
+                worksheet.column_dimensions["C"].width = 35  # Afternoon column
+                worksheet.column_dimensions["D"].width = 35  # Evening column
 
             # Add statistics sheets
             # Professor workload

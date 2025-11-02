@@ -35,7 +35,9 @@ class StatisticsPage(BasePage):
         )
 
         fig.update_layout(
-            xaxis_title="Room", yaxis_title="Utilization (%)", showlegend=False
+            xaxis_title="Room",
+            yaxis_title="Utilization (%)",
+            showlegend=False,
         )
 
         st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
