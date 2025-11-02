@@ -29,11 +29,12 @@ def main():
                 "8501",
                 "--server.address",
                 "localhost",
-            ]
+            ],
+            check=False,
         )
     except KeyboardInterrupt:
         print("\nApplication stopped.")
-    except Exception as e:
+    except (FileNotFoundError, OSError, subprocess.SubprocessError) as e:
         print(f"Error launching application: {e}")
         sys.exit(1)
 

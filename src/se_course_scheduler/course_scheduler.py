@@ -250,7 +250,8 @@ class CourseScheduler:
             print(f"\n{'Room ' + room.upper():^80}")
             print("-" * 80)
             print(
-                f"{'Day':<12} {'Period':<12} {'Time':<15} {'Course/Activity':<25} {'Professor/Organizer':<20}"
+                f"{'Day':<12} {'Period':<12} {'Time':<15} "
+                f"{'Course/Activity':<25} {'Professor/Organizer':<20}"
             )
             print("-" * 80)
 
@@ -292,7 +293,9 @@ class CourseScheduler:
             # Sort by day and period
             for slot in sorted(all_slots, key=lambda x: (x["day"], x["period"])):
                 print(
-                    f"{slot['day']:<12} {slot['period']:<12} {slot['time_range']:<15} {slot['activity']:<25} {slot['person']:<20}"
+                    f"{slot['day']:<12} {slot['period']:<12} "
+                    f"{slot['time_range']:<15} {slot['activity']:<25} "
+                    f"{slot['person']:<20}"
                 )
 
         print("\n" + "=" * 80)
