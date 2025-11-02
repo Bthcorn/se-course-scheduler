@@ -91,7 +91,7 @@ class CourseScheduler:
         """Retrieve the complete schedule"""
         query = (
             "scheduled(ProfID, Room, Day, Period, CourseID), "
-            "course(CourseID, CourseName, _, _, _), "
+            "course(CourseID, CourseName, Year, _, _), "
             "professor(ProfID, ProfName), "
             "time_slot(Day, Period, TimeRange)"
         )
@@ -106,6 +106,7 @@ class CourseScheduler:
                 {
                     "course_id": str(r["CourseID"]),
                     "course_name": str(r["CourseName"]),
+                    "year": str(r["Year"]),
                     "professor": str(r["ProfName"]),
                     "room": str(r["Room"]),
                     "day": str(r["Day"]),
