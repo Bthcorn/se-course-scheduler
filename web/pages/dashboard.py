@@ -88,17 +88,11 @@ class DashboardPage(BasePage):
             )
 
         with col4:
-            value = "N/A"
-            if st.session_state.current_stats.get("scheduled_courses", 0) > 0:
-                success_rate = (
-                    len(st.session_state.current_schedule)
-                    / st.session_state.current_stats["scheduled_courses"]
-                ) * 100
-                value = f"{success_rate:.1f}%"
-
+            result = st.session_state.get("schedule_result", {})
+            success_rate = result.get("success_rate", 0)
             ui.metric_card(
                 title="Success Rate",
-                content=value,
+                content=f"{success_rate:.1f}%" if success_rate > 0 else "N/A",
                 description="success rate",
                 key="success_rate_card",
             )
@@ -125,6 +119,7 @@ class DashboardPage(BasePage):
 
                     with st.spinner("Scheduling courses..."):
                         result = self.scheduler.schedule_all_courses()
+                        st.session_state.schedule_result = result
                         st.session_state.schedule_generated = True
                         st.session_state.current_schedule = (
                             self.scheduler.get_schedule()
@@ -134,13 +129,13 @@ class DashboardPage(BasePage):
                         )
                         st.session_state.current_stats = self.scheduler.get_statistics()
 
-                        if result["scheduled"]:
+                        if result.get("scheduled"):
                             st.session_state.success_message = (
                                 f"Successfully scheduled "
                                 f"{len(result['scheduled'])} courses!"
                             )
 
-                        if result["failed"]:
+                        if result.get("failed"):
                             st.session_state.warning_message = (
                                 f"Failed to schedule {len(result['failed'])} "
                                 f"courses: {', '.join(result['failed'])}"
@@ -167,6 +162,7 @@ class DashboardPage(BasePage):
                     st.session_state.current_schedule = []
                     st.session_state.current_reserved = []
                     st.session_state.current_stats = {}
+                    st.session_state.schedule_result = {}
                     st.session_state.success_message = "Schedule cleared!"
                     st.rerun()
 
