@@ -193,6 +193,9 @@ class DashboardPage(BasePage):
                             "Schedule validation failed - Conflicts detected!"
                         )
 
+                    # Refresh to show the message
+                    st.rerun()
+
         # Recent schedule preview
         if st.session_state.current_schedule:
             _ = st.markdown("<br>", unsafe_allow_html=True)
