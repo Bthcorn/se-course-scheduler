@@ -7,6 +7,7 @@ from typing import Any
 import io
 import re
 import streamlit as st
+import streamlit_shadcn_ui as ui
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -232,7 +233,10 @@ class TimetableViewPage(BasePage):
         # Column headers
         headers = ["Day"] + periods_order
         for col_idx, header in enumerate(headers, start=1):
-            cell = ws.cell(row=2, column=col_idx, value=header)
+            col_letter = get_column_letter(col_idx)
+            cell_ref = f"{col_letter}2"
+            ws[cell_ref] = header
+            cell = ws[cell_ref]
             cell.font = Font(bold=True, size=11)
             cell.fill = PatternFill(
                 start_color="f0f2f6", end_color="f0f2f6", fill_type="solid"
@@ -252,7 +256,9 @@ class TimetableViewPage(BasePage):
             day_lower = day.lower()
 
             # Day column
-            day_cell = ws.cell(row=row_idx, column=1, value=day)
+            day_cell_ref = f"A{row_idx}"
+            ws[day_cell_ref] = day
+            day_cell = ws[day_cell_ref]
             day_cell.font = Font(bold=True, size=10)
             day_cell.fill = PatternFill(
                 start_color="f9f9f9", end_color="f9f9f9", fill_type="solid"
@@ -270,7 +276,9 @@ class TimetableViewPage(BasePage):
                 period_lower = period.lower()
                 items = timetable.get(day_lower, {}).get(period_lower, [])
 
-                cell = ws.cell(row=row_idx, column=col_idx)
+                col_letter = get_column_letter(col_idx)
+                cell_ref = f"{col_letter}{row_idx}"
+                cell = ws[cell_ref]
                 cell.alignment = Alignment(
                     horizontal="center", vertical="center", wrap_text=True
                 )
@@ -543,13 +551,20 @@ class TimetableViewPage(BasePage):
             timetable = timetables_by_room[room]
 
             # Export button for each room
-            col1, col2 = st.columns(
-                [4, 1],
-            )
+            col1, col2 = st.columns([4, 1])
             with col1:
-                _ = st.markdown(f"### Room {room.upper()}")
+                _ = st.markdown(
+                    f"<h4>Room {room.upper()}</h4>",
+                    unsafe_allow_html=True,
+                )
             with col2:
-                if st.button("📥 Export Excel", key=f"excel_{room}", width="stretch"):
+                if ui.button(
+                    text="📥 Export Excel",
+                    key=f"excel_{room}",
+                    variant="outline",
+                    size="lg",
+                    class_name="w-full",
+                ):
                     try:
                         excel_data = self.export_timetable_to_excel(room, timetable)
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

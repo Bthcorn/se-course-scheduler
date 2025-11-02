@@ -8,6 +8,7 @@ dependencies = [
     "colorama>=0.4.6",
     "icecream>=2.1.8",
     "openpyxl>=3.1.5",
+    "openpyxl-stubs>=0.1.25",
     "pandas>=2.3.3",
     "pandas-stubs>=2.2.2.240807",
     "plotly>=5.17.0",
