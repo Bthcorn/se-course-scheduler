@@ -19,9 +19,8 @@ from web.pages.base_page import BasePage
 class TimetableViewPage(BasePage):
     """Timetable View page class"""
 
-    @staticmethod
     def format_cell_content(
-        course_name: str, professor: str, room: str, is_reserved: bool = False
+        self, course_name: str, professor: str, room: str, is_reserved: bool = False
     ) -> str:
         """Format cell content with HTML styling"""
         if is_reserved:
@@ -73,8 +72,8 @@ class TimetableViewPage(BasePage):
             "raw_text": re.sub("<[^<]+?>", "", html_content).replace("\n", " ").strip(),
         }
 
-    @staticmethod
     def create_timetable_data(
+        self,
         schedule: list[dict[str, str]],
         reserved: list[dict[str, str]],
         room_filter: str,
@@ -130,7 +129,7 @@ class TimetableViewPage(BasePage):
                 and period in timetables_by_room[room][day]
             ):
                 course_name = item.get("course_name", "")
-                cell_content = TimetableViewPage.format_cell_content(
+                cell_content = self.format_cell_content(
                     course_name, professor, room, False
                 )
                 timetables_by_room[room][day][period].append(cell_content)
@@ -154,9 +153,7 @@ class TimetableViewPage(BasePage):
                 day in timetables_by_room[room]
                 and period in timetables_by_room[room][day]
             ):
-                cell_content = TimetableViewPage.format_cell_content(
-                    reason, "", room, True
-                )
+                cell_content = self.format_cell_content(reason, "", room, True)
                 timetables_by_room[room][day][period].append(cell_content)
 
         return timetables_by_room
@@ -201,9 +198,8 @@ class TimetableViewPage(BasePage):
         df = df.set_index("Day")
         return df
 
-    @staticmethod
     def export_timetable_to_excel(
-        room: str, timetable: dict[str, dict[str, list[str]]]
+        self, room: str, timetable: dict[str, dict[str, list[str]]]
     ) -> bytes:
         """Export timetable to Excel with formatting matching the web view"""
 
@@ -330,9 +326,18 @@ class TimetableViewPage(BasePage):
         output.seek(0)
         return output.read()
 
-    @staticmethod
+    def convert_period_to_time(self, period: str) -> str:
+        """Convert period to time"""
+        if period == "Morning":
+            return "Morning (9:00-12:00)"
+        elif period == "Afternoon":
+            return "Afternoon (13:00-16:00)"
+        elif period == "Evening":
+            return "Evening (17:00-20:00)"
+        return ""
+
     def render_timetable_for_room(
-        room: str, timetable: dict[str, dict[str, list[str]]]
+        self, room: str, timetable: dict[str, dict[str, list[str]]]
     ):
         """Render a timetable table for a specific room"""
         days_order = [
@@ -344,11 +349,7 @@ class TimetableViewPage(BasePage):
             "Saturday",
             "Sunday",
         ]
-        periods_order = [
-            "Morning (9:00-12:00)",
-            "Afternoon (13:00-16:00)",
-            "Evening (17:00-20:00)",
-        ]
+        periods_order = ["Morning", "Afternoon", "Evening"]
 
         # Create HTML table
         html_table = "<table style='width:100%; border-collapse: collapse; margin-bottom: 2rem;'>"
@@ -366,7 +367,7 @@ class TimetableViewPage(BasePage):
         for period in periods_order:
             html_table += (
                 f"<th style='padding: 10px; border: 1px solid #ddd; text-align: center; "
-                f"font-weight: 600;'>{period}</th>"
+                f"font-weight: 600;'>{self.convert_period_to_time(period)}</th>"
             )
         html_table += "</tr></thead><tbody>"
 
