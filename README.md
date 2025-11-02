@@ -34,12 +34,14 @@ A comprehensive course scheduling system for Software Engineering programs that 
 
 ## Features
 
-- **Constraint-based Scheduling**: Uses Prolog for intelligent course scheduling with conflict resolution
-- **Web Interface**: Modern Streamlit-based web application with interactive dashboards
-- **Excel Integration**: Import/export course and professor data from Excel files
-- **Real-time Statistics**: Visual analytics for room utilization and professor workload
-- **Flexible Export**: Export schedules in multiple formats (Excel, CSV, JSON)
-- **Interactive Filtering**: Filter schedules by room, day, and time period
+- **Constraint-based Scheduling**: Uses Prolog for intelligent course scheduling with conflict resolution and validation
+- **Modern Web Interface**: Streamlit-based web application with interactive dashboards and beautiful UI components
+- **Excel Integration**: Import/export course and professor data from Excel files with structured sheet support
+- **Real-time Statistics**: Visual analytics for room utilization and professor workload tracking
+- **Flexible Export**: Export schedules in multiple formats (Excel, CSV, JSON) with preview
+- **Interactive Filtering**: Filter schedules by room, day, and time period in the timetable view
+- **Schedule Validation**: Built-in conflict detection and validation system
+- **Multi-page Navigation**: Organized interface with dedicated pages for dashboard, timetable, statistics, settings, and export
 
 ## Installation
 
@@ -117,31 +119,38 @@ cd src && python main.py
 
 - Overview of scheduled courses and statistics
 - Quick actions for scheduling, clearing, and validation
-- Real-time metrics and success rates
+- Real-time metrics including success rates
+- Schedule preview with top 10 scheduled courses
+- Visual action cards with gradient styling
 
-### 📊 Schedule View
+### 📊 Timetable View
 
 - Interactive schedule display with filtering options
 - Filter by room, day, or time period
 - View both scheduled courses and reserved slots
+- Color-coded schedule visualization
+- Detailed course and professor information
 
 ### 📈 Statistics
 
 - Professor workload visualization
-- Room utilization charts
+- Room utilization charts and percentages
 - Detailed statistics tables
+- Real-time analytics and metrics
 
 ### ⚙️ Settings
 
 - Upload Excel files with course and professor data
 - System information and data management
 - Clear all data option
+- Configuration management
 
 ### 📤 Export
 
-- Export schedules in multiple formats
-- Download Excel, CSV, or JSON files
+- Export schedules in multiple formats (Excel, CSV, JSON)
+- Download generated schedule files
 - Data preview before export
+- Flexible export options
 
 ## Excel Data Format
 
@@ -188,23 +197,28 @@ se-course-scheduler/
 │   │   ├── course_scheduler.py    # Main scheduling logic
 │   │   └── excel_handler.py       # Excel file operations
 │   └── main.py                    # CLI entry point
-├── web/                          # Web application
-│   └── streamlit_app.py          # Streamlit web app
-├── data/                         # Data files
-│   ├── scheduler.pl              # Prolog knowledge base
-│   └── generated_schedule.xlsx   # Generated schedules
-├── docs/                         # Documentation (empty)
-├── .mypy_cache/                  # MyPy cache
-├── .venv/                        # Virtual environment
-├── __pycache__/                  # Python cache
-├── run_web_app.py               # Main web app launcher
-├── run_cli.py                   # Main CLI launcher
-├── pyproject.toml               # Project configuration
-├── requirements.txt             # Python dependencies
-├── .gitignore                   # Git ignore rules
-├── .python-version              # Python version specification
-├── uv.lock                      # UV lock file
-└── README.md                    # This file
+├── web/                           # Web application
+│   ├── app.py                     # Main Streamlit app router
+│   ├── streamlit_app.py           # Streamlit entry point
+│   ├── config.py                  # Configuration settings
+│   ├── components.py              # Reusable UI components
+│   ├── utils.py                   # Utility functions
+│   └── pages/                     # Page components
+│       ├── base_page.py           # Base page class
+│       ├── dashboard.py           # Dashboard page
+│       ├── timetable_view.py      # Timetable visualization
+│       ├── statistics.py          # Statistics page
+│       ├── settings.py            # Settings page
+│       └── export.py              # Export page
+├── data/                          # Data files
+│   └── scheduler.pl               # Prolog knowledge base
+├── run_web_app.py                 # Web app launcher script
+├── run_cli.py                     # CLI launcher script
+├── pyproject.toml                 # Project configuration
+├── requirements.txt               # Python dependencies
+├── uv.lock                        # UV lock file
+├── PROJECT_STRUCTURE.md           # Detailed structure docs
+└── README.md                      # This file
 ```
 
 See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure documentation.
@@ -248,10 +262,12 @@ pip install -r requirements.txt
 
 1. **Prolog not found**: Ensure SWI-Prolog is installed and in your PATH
 2. **Import errors**: Install all dependencies using `uv sync` or `pip install -r requirements.txt`
-3. **Excel file errors**: Ensure Excel files have the correct sheet names and column headers
-4. **Scheduling conflicts**: Check the Prolog knowledge base for constraint definitions
+3. **Excel file errors**: Ensure Excel files have the correct sheet names and column headers (see Excel Data Format section)
+4. **Scheduling conflicts**: Use the "Validate Schedule" button on the Dashboard to check for conflicts
 5. **Virtual environment issues**: Use `uv sync` to properly set up the development environment
 6. **Missing dependencies**: Verify `pyswip` is properly installed (may require SWI-Prolog development headers on some systems)
+7. **Session state errors**: If you encounter session state issues, refresh the web application page
+8. **Attribute errors**: Ensure all required session state variables are initialized by navigating through the app pages
 
 ### Getting Help
 
@@ -274,5 +290,7 @@ This project is licensed under the MIT License.
 ## Acknowledgments
 
 - Built with [Streamlit](https://streamlit.io/) for the web interface
+- Uses [streamlit-shadcn-ui](https://github.com/sneddy/shadcn-ui-streamlit) for modern UI components
 - Uses [PySWIP](https://github.com/yuce/pyswip) for Prolog integration
 - Excel handling powered by [pandas](https://pandas.pydata.org/) and [openpyxl](https://openpyxl.readthedocs.io/)
+- Powered by [SWI-Prolog](https://www.swi-prolog.org/) for constraint-based scheduling logic
