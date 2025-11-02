@@ -33,7 +33,10 @@ class ExcelHandler:
 
                 # Create Prolog fact
                 prereq_list = "[" + ",".join(prereqs) + "]" if prereqs else "[]"
-                course_query = f"assertz(course({course_id}, '{course_name}', {year}, {capacity}, {prereq_list}))"
+                course_query = (
+                    f"assertz(course({course_id}, '{course_name}', {year}, "
+                    f"{capacity}, {prereq_list}))"
+                )
 
                 _ = list(self.prolog.query(course_query))
             print(f"✓ Loaded {len(df)} courses from Excel")
@@ -168,7 +171,8 @@ class ExcelHandler:
                             )
                             if scheduled_slot:
                                 row[col_name] = (
-                                    f"{scheduled_slot['course_name']}\n{scheduled_slot['professor']}"
+                                    f"{scheduled_slot['course_name']}\n"
+                                    f"{scheduled_slot['professor']}"
                                 )
                             else:
                                 row[col_name] = "[AVAILABLE]"

@@ -2,6 +2,8 @@
 Main module for the SE Course Scheduler
 """
 
+import os
+
 from .se_course_scheduler import CourseScheduler
 
 
@@ -14,8 +16,6 @@ def main():
 
     # Initialize scheduler
     # Determine the correct path to scheduler.pl
-    import os
-
     current_file_path = os.path.abspath(__file__)
     project_root = os.path.dirname(os.path.dirname(current_file_path))
     prolog_path = os.path.join(project_root, "data", "scheduler.pl")

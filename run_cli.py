@@ -5,19 +5,16 @@ Launcher script for the CLI Course Scheduler application
 
 import sys
 
+from src.main import main as cli_main
+
 
 def main():
     """Launch the CLI application"""
 
-    # Import and run the main function
+    # Run the main function
     try:
-        from src.main import main as cli_main
-
         cli_main()
-    except ImportError as e:
-        print(f"Error importing CLI application: {e}")
-        sys.exit(1)
-    except Exception as e:
+    except (FileNotFoundError, ValueError, RuntimeError) as e:
         print(f"Error running CLI application: {e}")
         sys.exit(1)
 
