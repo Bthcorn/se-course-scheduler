@@ -6,7 +6,7 @@ import streamlit as st
 import streamlit_shadcn_ui as ui
 from web.utils import check_scheduler_initialized, display_messages
 from web.components import display_schedule_table
-from web.pages.base_page import BasePage
+from web.views.base_page import BasePage
 
 
 class DashboardPage(BasePage):

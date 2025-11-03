@@ -8,7 +8,7 @@ import os
 import streamlit as st
 import pandas as pd
 from web.utils import check_scheduler_initialized
-from web.pages.base_page import BasePage
+from web.views.base_page import BasePage
 
 
 class ExportPage(BasePage):
