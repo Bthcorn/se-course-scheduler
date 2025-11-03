@@ -14,7 +14,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from web.utils import extract_unique_values
 from web.components import display_schedule_table
-from web.pages.base_page import BasePage
+from web.views.base_page import BasePage
 
 
 class TimetableViewPage(BasePage):

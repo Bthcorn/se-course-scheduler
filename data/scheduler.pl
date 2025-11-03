@@ -4,11 +4,11 @@
 % ==================== FACTS ====================
 
 % Define available rooms with capacity
-room(cb101, 40).
-room(cb102, 40).
-room(cb103, 30).
-room(cb104, 30).
-room(cb201, 50).
+room(ecc802, 40).
+room(ecc803, 40).
+room(ecc804, 30).
+room(ecc805, 30).
+room(ecc806, 50).
 
 % Define time slots: time_slot(Day, Period, TimeRange)
 time_slot(monday, morning, '09:00-12:00').
@@ -62,10 +62,24 @@ professor(p010, 'Dr. Garcia').
 % Define professor preferences: prefers(ProfID, Day, Period)
 prefers(p001, monday, morning).
 prefers(p001, wednesday, afternoon).
-prefers(p002, tuesday, morning).
+prefers(p002, monday, morning).
 prefers(p002, thursday, afternoon).
-prefers(p003, tuesday, morning).
+prefers(p003, monday, morning).
 prefers(p003, friday, afternoon).
+prefers(p004, monday, morning).
+prefers(p004, wednesday, afternoon).
+prefers(p004, friday, morning).
+prefers(p005, monday, morning).
+prefers(p005, friday, morning).
+prefers(p006, thursday, afternoon).
+prefers(p007, monday, morning).
+prefers(p007, wednesday, afternoon).
+prefers(p008, tuesday, morning).
+prefers(p008, thursday, afternoon).
+prefers(p008, monday, morning).
+prefers(p009, friday, morning).
+prefers(p010, _, afternoon).
+
 
 % Define professor capabilities: can_teach(ProfID, CourseID)
 can_teach(p001, cs302).  % Dr. Smith - AI
@@ -86,6 +100,16 @@ can_teach(p001, cs103).  % Dr. Smith - Discrete Mathematics
 % ==================== DYNAMIC FACTS ====================
 % These will store the generated schedule
 :- dynamic scheduled/5.
+
+% ==================== CONFLICTING SCHEDULES (FOR TESTING) ====================
+% These predicates will cause validate_schedule to fail
+% Conflict 1: Professor teaching two courses at the same time
+% scheduled(p001, ecc802, monday, morning, cs302).   % Dr. Smith - AI
+% scheduled(p001, ecc803, monday, morning, cs401).   % Dr. Smith - ML (conflict: same professor, same time)
+
+% Conflict 2: Two courses in the same room at the same time
+% scheduled(p002, ecc804, tuesday, afternoon, cs201).  % Dr. Johnson - DB
+% scheduled(p003, ecc804, tuesday, afternoon, cs301). % Dr. Williams - SE (conflict: same room, same time)
 
 % ==================== RULES ====================
 
@@ -109,23 +133,19 @@ course_not_scheduled(CourseID) :-
     \+ scheduled(_, _, _, _, CourseID).
 
 % Define reserved time slots: reserved(Room, Day, Period, Reason)
-reserved(cb101, monday, afternoon, 'Department Meeting').
-reserved(cb101, tuesday, afternoon, 'Faculty Development').
-reserved(cb102, wednesday, morning, 'Student Club Meeting').
-reserved(cb103, thursday, afternoon, 'Guest Lecture Series').
-reserved(cb104, friday, morning, 'Career Services Workshop').
-reserved(cb201, monday, morning, 'Administrative Meeting').
-reserved(cb101, wednesday, afternoon, 'Research Seminar').
-reserved(cb102, friday, afternoon, 'Department Social Event').
+reserved(ecc802, monday, afternoon, 'Department Meeting').
+reserved(ecc802, tuesday, afternoon, 'Faculty Development').
+reserved(ecc803, wednesday, morning, 'Student Club Meeting').
+reserved(ecc804, thursday, afternoon, 'Guest Lecture Series').
+reserved(ecc805, friday, morning, 'Career Services Workshop').
+reserved(ecc806, monday, morning, 'Administrative Meeting').
+reserved(ecc802, wednesday, afternoon, 'Research Seminar').
+reserved(ecc803, friday, afternoon, 'Department Social Event').
 
 % Check if all prerequisites are satisfied
 % For simplicity in POC, we assume prerequisites are scheduled in earlier semesters
 prerequisites_met(CourseID) :-
     course(CourseID, _, _, _, _).  % Simplified - always true for POC
-
-% Calculate preference score (higher is better)
-preference_score(ProfID, Day, Period, Score) :-
-    (prefers(ProfID, Day, Period) -> Score = 10 ; Score = 5).
 
 % Find a valid assignment for a course
 find_assignment(CourseID, ProfID, Room, Day, Period) :-
@@ -138,10 +158,27 @@ find_assignment(CourseID, ProfID, Room, Day, Period) :-
     prerequisites_met(CourseID),
     course_not_scheduled(CourseID).
 
-% Schedule a course with the best available option
-schedule_course(CourseID) :-
+% Find assignment with professor preference
+find_preferred_assignment(CourseID, ProfID, Room, Day, Period) :-
     find_assignment(CourseID, ProfID, Room, Day, Period),
-    assertz(scheduled(ProfID, Room, Day, Period, CourseID)).
+    prefers(ProfID, Day, Period).
+
+% Find assignment without preference (fallback)
+find_fallback_assignment(CourseID, ProfID, Room, Day, Period) :-
+    find_assignment(CourseID, ProfID, Room, Day, Period),
+    \+ prefers(ProfID, Day, Period).
+
+% Schedule a course with the best available option (prioritizes preferences)
+schedule_course(CourseID) :-
+    % First try to find an assignment with professor preference
+    (
+        find_preferred_assignment(CourseID, ProfID, Room, Day, Period),
+        assertz(scheduled(ProfID, Room, Day, Period, CourseID))
+        ;
+    % If no preferred slot available, fall back to any valid assignment
+        find_fallback_assignment(CourseID, ProfID, Room, Day, Period),
+        assertz(scheduled(ProfID, Room, Day, Period, CourseID))
+    ).
 
 % Get all scheduled classes
 get_schedule(Schedule) :-
@@ -204,7 +241,7 @@ room_utilization(Room, UsedSlots, TotalSlots, Percentage) :-
     length(Used, UsedSlots),
     findall(1, reserved(Room, _, _, _), Reserved),
     length(Reserved, ReservedSlots),
-    TotalSlots = 10,  % 5 days * 2 periods
+    TotalSlots = 21,  % 7 days * 3 periods
     AvailableSlots is TotalSlots - ReservedSlots,
     Percentage is (UsedSlots / AvailableSlots) * 100.
 

@@ -6,7 +6,7 @@ from typing import Any
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from web.pages.base_page import BasePage
+from web.views.base_page import BasePage
 
 
 class StatisticsPage(BasePage):

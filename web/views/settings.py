@@ -6,7 +6,7 @@ import os
 import streamlit as st
 import pandas as pd
 from web.utils import check_scheduler_initialized
-from web.pages.base_page import BasePage
+from web.views.base_page import BasePage
 
 
 class SettingsPage(BasePage):
@@ -42,7 +42,7 @@ class SettingsPage(BasePage):
                     "Prerequisites": ["", "CS101", "CS201,CS101"],
                 }
             )
-            st.dataframe(courses_example, use_container_width=True, hide_index=True)
+            st.dataframe(courses_example, width="stretch", hide_index=True)
             st.caption(
                 "💡 **Prerequisites** column is optional. Leave empty or use "
                 "comma-separated CourseIDs."
@@ -62,7 +62,7 @@ class SettingsPage(BasePage):
                     ],
                 }
             )
-            st.dataframe(professors_example, use_container_width=True, hide_index=True)
+            st.dataframe(professors_example, width="stretch", hide_index=True)
 
             st.divider()
 
@@ -74,7 +74,7 @@ class SettingsPage(BasePage):
                     "CourseID": ["CS101", "CS201", "CS101", "CS301", "CS201"],
                 }
             )
-            st.dataframe(can_teach_example, use_container_width=True, hide_index=True)
+            st.dataframe(can_teach_example, width="stretch", hide_index=True)
             st.caption(
                 "💡 This sheet defines which professors can teach which courses."
             )
@@ -90,7 +90,7 @@ class SettingsPage(BasePage):
                     "Period": ["morning", "afternoon", "evening"],
                 }
             )
-            st.dataframe(preferences_example, use_container_width=True, hide_index=True)
+            st.dataframe(preferences_example, width="stretch", hide_index=True)
             st.caption(
                 "💡 **Day** values: monday, tuesday, wednesday, thursday, friday, saturday, sunday "
                 "(lowercase)\n\n"
