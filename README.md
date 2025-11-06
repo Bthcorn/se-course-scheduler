@@ -27,7 +27,7 @@ A comprehensive course scheduling system for Software Engineering programs that 
 - **Constraint-based Scheduling**: Uses Prolog with CSP (Constraint Satisfaction Problem) algorithms
 - **MCV + Forward Checking**: Most Constrained Variable heuristic with forward checking for efficient scheduling
 - **Modern Web Interface**: Streamlit-based web application with interactive dashboards
-- **Excel Integration**: Import/export course and professor data from Excel files
+- **Excel Integration**: Import course and professor data from Excel files
 - **Preference Support**: Handles professor time preferences with fallback options
 - **Real-time Visualization**: View schedules organized by year and by room
 - **Conflict Detection**: Built-in validation to prevent scheduling conflicts
@@ -199,8 +199,7 @@ se-course-scheduler/
 │   ├── app.py                     # Main Streamlit app router
 │   ├── streamlit_app.py          # Streamlit entry point
 │   ├── config.py                  # Configuration settings
-│   ├── components.py              # Reusable UI components
-│   ├── utils.py                   # Utility functions
+│   ├── scheduler_initializer.py   # Scheduler and session state initialization
 │   └── views/                     # Page components
 │       ├── base_page.py           # Base page class
 │       ├── dashboard.py           # Dashboard page

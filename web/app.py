@@ -5,7 +5,7 @@ A comprehensive web interface for course scheduling using Prolog
 
 import streamlit as st
 from web.config import setup_page_config, apply_custom_css
-from web.utils import initialize_scheduler, initialize_session_state
+from web.scheduler_initializer import initialize_scheduler, initialize_session_state
 from web.views.dashboard import DashboardPage
 from web.views.timetable_view import TimetableViewPage
 
