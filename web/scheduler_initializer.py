@@ -1,4 +1,3 @@
-
 import os
 import streamlit as st
 from src.se_course_scheduler import CourseScheduler
@@ -25,4 +24,3 @@ def initialize_session_state():
     for key, default_value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = default_value
-

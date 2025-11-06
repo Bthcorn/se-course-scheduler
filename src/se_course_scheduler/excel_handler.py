@@ -1,4 +1,3 @@
-
 import pandas as pd
 from pyswip import Prolog
 
@@ -18,9 +17,7 @@ class ExcelHandler:
                 course_name = str(row["CourseName"])
                 year = int(row["Year"])
 
-                course_query = (
-                    f"assertz(course({course_id}, '{course_name}', {year}))"
-                )
+                course_query = f"assertz(course({course_id}, '{course_name}', {year}))"
 
                 _ = list(self.prolog.query(course_query))
             print(f"Loaded {len(df)} courses from Excel")
@@ -40,7 +37,7 @@ class ExcelHandler:
                 )
                 _ = list(self.prolog.query(professor_query))
             print(f"Loaded {len(df_prof)} professors from Excel")
-            
+
             df_teach = pd.read_excel(excel_file, sheet_name="CanTeach")
             for _, row in df_teach.iterrows():
                 teach_prof_id = str(row["ProfessorID"])
@@ -48,18 +45,20 @@ class ExcelHandler:
                 teach_query = f"assertz(can_teach({teach_prof_id}, {course_id}))"
                 _ = list(self.prolog.query(teach_query))
             print(f"Loaded {len(df_teach)} teaching capabilities from Excel")
-            
+
             try:
                 df_pref = pd.read_excel(excel_file, sheet_name="Preferences")
                 for _, row in df_pref.iterrows():
                     pref_prof_id = str(row["ProfessorID"])
                     day = str(row["Day"]).lower()
                     time_slot = str(row["TimeSlot"]).lower()
-                    
+
                     if day == "_":
                         pref_query = f"assertz(prefers({pref_prof_id}, _, {time_slot}))"
                     else:
-                        pref_query = f"assertz(prefers({pref_prof_id}, {day}, {time_slot}))"
+                        pref_query = (
+                            f"assertz(prefers({pref_prof_id}, {day}, {time_slot}))"
+                        )
                     _ = list(self.prolog.query(pref_query))
                 print(f"Loaded {len(df_pref)} professor preferences from Excel")
             except ValueError:
@@ -74,6 +73,6 @@ class ExcelHandler:
         self.prolog.retractall("professor(_, _)")
         self.prolog.retractall("can_teach(_, _)")
         self.prolog.retractall("prefers(_, _, _)")
-        
+
         self.load_courses_from_excel(excel_file)
         self.load_professors_from_excel(excel_file)

@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from typing import Optional
 from src.se_course_scheduler import CourseScheduler
