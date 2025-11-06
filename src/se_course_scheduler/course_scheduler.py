@@ -36,66 +36,10 @@ class CourseScheduler:
         """Load professors and their capabilities from Excel"""
         self.excel_handler.load_professors_from_excel(excel_file)
 
-    def load_all_data_from_excel(self, excel_file: str) -> None:
-        """Load all data (courses and professors) from Excel file"""
-        self.excel_handler.load_all_data_from_excel(excel_file)
-
-    def get_excel_handler(self) -> ExcelHandler:
-        """Get the Excel handler for direct access to Excel operations"""
-        return self.excel_handler
-
     def clear_schedule(self) -> None:
         """Clear all scheduled courses"""
         query = "clear_schedule"
         _ = list(self.prolog.query(query))
-
-    def get_courses_with_preferences(self) -> list[str]:
-        """
-        Get list of courses taught by professors who have time preferences.
-        
-        Returns:
-            List of course IDs where at least one qualified professor has preferences
-        """
-        courses_query = "course(CourseID, _, _)"
-        all_courses: list[dict[str, Any]] = list(self.prolog.query(courses_query))
-        
-        courses_with_prefs: list[str] = []
-        
-        for course in all_courses:
-            course_id = str(course["CourseID"])
-            
-            # Check if any professor who can teach this course has preferences
-            has_pref_query = f"can_teach(ProfID, {course_id}), has_preference(ProfID)"
-            has_pref = list(self.prolog.query(has_pref_query))
-            
-            if has_pref:
-                courses_with_prefs.append(course_id)
-        
-        return courses_with_prefs
-
-    def get_courses_without_preferences(self) -> list[str]:
-        """
-        Get list of courses taught by professors without time preferences.
-        
-        Returns:
-            List of course IDs where no qualified professor has preferences (flexible)
-        """
-        courses_query = "course(CourseID, _, _)"
-        all_courses: list[dict[str, Any]] = list(self.prolog.query(courses_query))
-        
-        courses_without_prefs: list[str] = []
-        
-        for course in all_courses:
-            course_id = str(course["CourseID"])
-            
-            # Check if any professor who can teach this course has preferences
-            has_pref_query = f"can_teach(ProfID, {course_id}), has_preference(ProfID)"
-            has_pref = list(self.prolog.query(has_pref_query))
-            
-            if not has_pref:
-                courses_without_prefs.append(course_id)
-        
-        return courses_without_prefs
 
     def schedule_courses(self) -> dict[str, Any]:
         """
@@ -248,56 +192,6 @@ class CourseScheduler:
                     "year": str(r["Year"]),
                     "professor": str(r["ProfName"]),
                     "room": str(r["Room"]),
-                    "day": str(r["Day"]),
-                    "timeslot": str(r["TimeSlot"]),
-                    "time_range": str(r["TimeRange"]),
-                }
-            )
-
-        return schedule
-
-    def get_reserved_slots(self) -> list[dict[str, str]]:
-        """Retrieve all reserved time slots"""
-        query = "reserved(Room, Day, TimeSlot, Reason), time_slot(Day, TimeSlot, TimeRange)"
-        results: list[dict[str, Any]] = list(self.prolog.query(query))
-
-        if not results:
-            return []
-
-        reserved: list[dict[str, str]] = []
-        for r in results:
-            reserved.append(
-                {
-                    "room": str(r["Room"]),
-                    "day": str(r["Day"]),
-                    "timeslot": str(r["TimeSlot"]),
-                    "time_range": str(r["TimeRange"]),
-                    "reason": str(r["Reason"]),
-                }
-            )
-
-        return reserved
-
-    def get_room_schedule(self, room: str) -> list[dict[str, str]]:
-        """Get schedule for a specific room"""
-        query = (
-            f"scheduled(ProfID, {room}, Day, TimeSlot, CourseID), "
-            "course(CourseID, CourseName, _), "
-            "professor(ProfID, ProfName), "
-            "time_slot(Day, TimeSlot, TimeRange)"
-        )
-        results: list[dict[str, Any]] = list(self.prolog.query(query))
-
-        if not results:
-            return []
-
-        schedule: list[dict[str, str]] = []
-        for r in results:
-            schedule.append(
-                {
-                    "course_id": str(r["CourseID"]),
-                    "course_name": str(r["CourseName"]),
-                    "professor": str(r["ProfName"]),
                     "day": str(r["Day"]),
                     "timeslot": str(r["TimeSlot"]),
                     "time_range": str(r["TimeRange"]),

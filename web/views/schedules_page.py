@@ -1,13 +1,12 @@
 """
-Timetable View page for the Streamlit application - Schedules by Year and Room
+Schedules page for the Streamlit application - Schedules by Year and Room
 """
 
 import streamlit as st
-import pandas as pd
 from web.views.base_page import BasePage
 
 
-class TimetableViewPage(BasePage):
+class SchedulesPage(BasePage):
     """Schedules page - organized by year and by room"""
 
     def render(self):

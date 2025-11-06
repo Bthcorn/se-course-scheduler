@@ -203,7 +203,7 @@ se-course-scheduler/
 │   └── views/                     # Page components
 │       ├── base_page.py           # Base page class
 │       ├── dashboard.py           # Dashboard page
-│       └── timetable_view.py      # Timetable visualization
+│       └── schedules_page.py      # Schedules visualization
 ├── data/                          # Data files
 │   ├── scheduler.pl               # Prolog knowledge base (CSP algorithm)
 │   ├── facts.pl                   # Base facts (rooms, time slots)

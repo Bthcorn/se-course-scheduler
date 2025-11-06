@@ -7,7 +7,7 @@ import streamlit as st
 from web.config import setup_page_config, apply_custom_css
 from web.scheduler_initializer import initialize_scheduler, initialize_session_state
 from web.views.dashboard import DashboardPage
-from web.views.timetable_view import TimetableViewPage
+from web.views.schedules_page import SchedulesPage
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     # Simple navigation buttons
     st.sidebar.title("Navigation")
     
-    if st.sidebar.button("Navigation", use_container_width=True):
+    if st.sidebar.button("Dashboard", use_container_width=True):
         st.session_state.page = "Dashboard"
     
     if st.sidebar.button("Schedules", use_container_width=True):
@@ -47,7 +47,7 @@ def main():
         page_instance = DashboardPage(scheduler)
         page_instance.render()
     elif st.session_state.page == "Schedules":
-        page_instance = TimetableViewPage(scheduler)
+        page_instance = SchedulesPage(scheduler)
         page_instance.render()
 
 
