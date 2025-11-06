@@ -19,6 +19,7 @@ class CourseScheduler:
         """Initialize the scheduler with Prolog knowledge base"""
         self.prolog = Prolog()
         self.excel_handler = ExcelHandler(self.prolog)
+        self.prolog_file = prolog_file
 
         # Load the Prolog file
         try:
@@ -40,6 +41,27 @@ class CourseScheduler:
         """Clear all scheduled courses"""
         query = "clear_schedule"
         _ = list(self.prolog.query(query))
+
+    def reset_to_defaults(self) -> None:
+        """
+        Reset all dynamic data to default Prolog facts.
+        Clears all courses, professors, teaching capabilities, preferences, and schedules,
+        then reloads the default facts from the Prolog file.
+        """
+        # Clear all dynamic facts
+        self.prolog.retractall("course(_, _, _)")
+        self.prolog.retractall("professor(_, _)")
+        self.prolog.retractall("can_teach(_, _)")
+        self.prolog.retractall("prefers(_, _, _)")
+        self.clear_schedule()
+        
+        # Reload the Prolog file to restore default facts
+        try:
+            self.prolog.consult(self.prolog_file)
+            print(f"✓ Reset to default Prolog facts from {self.prolog_file}")
+        except Exception as e:
+            print(f"✗ Error reloading Prolog file: {e}")
+            raise
 
     def schedule_courses(self) -> dict[str, Any]:
         """

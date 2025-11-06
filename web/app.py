@@ -16,18 +16,31 @@ def main():
     setup_page_config()
     apply_custom_css()
 
+    # Initialize session state first
+    initialize_session_state()
+    
     # Initialize scheduler (store in session state to persist across reruns)
+    # On browser refresh, session state is cleared, so we get fresh initialization with defaults
+    # On navigation between tabs, session state persists, so we keep the current state
     if "scheduler" not in st.session_state:
+        # Fresh page load - initialize with default Prolog facts
         scheduler, error = initialize_scheduler()
         if error:
             _ = st.error(f"Failed to initialize scheduler: {error}")
             st.stop()
         st.session_state.scheduler = scheduler
+        # Mark as initialized to prevent reset on subsequent reruns
+        st.session_state.app_initialized = True
+        # Ensure we start with default facts (clear any dynamic data that might exist)
+        try:
+            scheduler.reset_to_defaults()
+        except Exception as e:
+            st.error(f"Failed to reset to defaults: {e}")
+            st.stop()
     else:
+        # Scheduler exists - this is navigation between tabs or rerun
+        # Keep the current state (don't reset)
         scheduler = st.session_state.scheduler
-
-    # Initialize session state
-    initialize_session_state()
 
     # Simple navigation buttons
     st.sidebar.title("Navigation")
