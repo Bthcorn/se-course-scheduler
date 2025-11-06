@@ -1,61 +1,49 @@
-"""
-Main Streamlit application entry point
-A comprehensive web interface for course scheduling using Prolog
-"""
 
 import streamlit as st
 from web.config import setup_page_config, apply_custom_css
-from web.utils import initialize_scheduler, initialize_session_state, setup_navigation
+from web.scheduler_initializer import initialize_scheduler, initialize_session_state
 from web.views.dashboard import DashboardPage
-from web.views.timetable_view import TimetableViewPage
-from web.views.statistics import StatisticsPage
-from web.views.settings import SettingsPage
-from web.views.export import ExportPage
+from web.views.schedules_page import SchedulesPage
 
 
 def main():
     """Main Streamlit application"""
-    # Setup page configuration and styling
     setup_page_config()
     apply_custom_css()
 
-    # Header
-    _ = st.markdown(
-        '<h1 class="main-header">📚 SE Course Scheduler</h1>',
-        unsafe_allow_html=True,
-    )
-
-    # Initialize scheduler (store in session state to persist across reruns)
+    initialize_session_state()
+    
     if "scheduler" not in st.session_state:
         scheduler, error = initialize_scheduler()
         if error:
             _ = st.error(f"Failed to initialize scheduler: {error}")
             st.stop()
         st.session_state.scheduler = scheduler
+        st.session_state.app_initialized = True
+        try:
+            scheduler.reset_to_defaults()
+        except Exception as e:
+            st.error(f"Failed to reset to defaults: {e}")
+            st.stop()
     else:
         scheduler = st.session_state.scheduler
 
-    # Setup navigation
-    page = setup_navigation()
+    st.sidebar.title("Navigation")
+    
+    if st.sidebar.button("Dashboard", use_container_width=True):
+        st.session_state.page = "Dashboard"
+    
+    if st.sidebar.button("Schedules", use_container_width=True):
+        st.session_state.page = "Schedules"
 
-    # Initialize session state
-    initialize_session_state()
+    if "page" not in st.session_state:
+        st.session_state.page = "Dashboard"
 
-    # Route to appropriate page using classes
-    if page == "🏠 Dashboard":
+    if st.session_state.page == "Dashboard":
         page_instance = DashboardPage(scheduler)
         page_instance.render()
-    elif page == "📅 Timetable View":
-        page_instance = TimetableViewPage(scheduler)
-        page_instance.render()
-    elif page == "📈 Statistics":
-        page_instance = StatisticsPage(scheduler)
-        page_instance.render()
-    elif page == "⚙️ Settings":
-        page_instance = SettingsPage(scheduler)
-        page_instance.render()
-    elif page == "📤 Export":
-        page_instance = ExportPage(scheduler)
+    elif st.session_state.page == "Schedules":
+        page_instance = SchedulesPage(scheduler)
         page_instance.render()
 
 
