@@ -6,39 +6,33 @@ from .excel_handler import ExcelHandler
 
 @final
 class CourseScheduler:
-    """Main class for course scheduling using Prolog"""
 
     prolog: Prolog
     excel_handler: ExcelHandler
 
     def __init__(self, prolog_file: str = "data/scheduler.pl"):
-        """Initialize the scheduler with Prolog knowledge base"""
         self.prolog = Prolog()
         self.excel_handler = ExcelHandler(self.prolog)
         self.prolog_file = prolog_file
 
         try:
             self.prolog.consult(prolog_file)
-            print(f"✓ Loaded Prolog knowledge base from {prolog_file}")
+            print(f"Loaded Prolog knowledge base from {prolog_file}")
         except Exception as e:
-            print(f"✗ Error loading Prolog file: {e}")
+            print(f"Error loading Prolog file: {e}")
             raise
 
     def load_courses_from_excel(self, excel_file: str) -> None:
-        """Load courses from Excel file and assert into Prolog"""
         self.excel_handler.load_courses_from_excel(excel_file)
 
     def load_professors_from_excel(self, excel_file: str) -> None:
-        """Load professors and their capabilities from Excel"""
         self.excel_handler.load_professors_from_excel(excel_file)
 
     def clear_schedule(self) -> None:
-        """Clear all scheduled courses"""
         query = "clear_schedule"
         _ = list(self.prolog.query(query))
 
     def reset_to_defaults(self) -> None:
-        """Reset all dynamic data to default Prolog facts"""
         self.prolog.retractall("course(_, _, _)")
         self.prolog.retractall("professor(_, _)")
         self.prolog.retractall("can_teach(_, _)")
@@ -47,13 +41,12 @@ class CourseScheduler:
         
         try:
             self.prolog.consult(self.prolog_file)
-            print(f"✓ Reset to default Prolog facts from {self.prolog_file}")
+            print(f"Reset to default Prolog facts from {self.prolog_file}")
         except Exception as e:
-            print(f"✗ Error reloading Prolog file: {e}")
+            print(f"Error reloading Prolog file: {e}")
             raise
 
     def schedule_courses(self) -> dict[str, Any]:
-        """Schedule all courses using CSP with MCV + Forward Checking"""
         self.clear_schedule()
         
         courses_query = "course(CourseID, _, _)"

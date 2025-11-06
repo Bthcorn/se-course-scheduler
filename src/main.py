@@ -5,11 +5,8 @@ from .se_course_scheduler import CourseScheduler
 
 
 def main():
-    """Main function to demonstrate the scheduler"""
 
-    print("\n" + "=" * 80)
     print("SE COURSE SCHEDULING AGENT - POC".center(80))
-    print("=" * 80 + "\n")
 
     current_file_path = os.path.abspath(__file__)
     project_root = os.path.dirname(os.path.dirname(current_file_path))

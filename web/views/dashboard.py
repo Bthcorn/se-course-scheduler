@@ -4,10 +4,8 @@ from web.views.base_page import BasePage
 
 
 class DashboardPage(BasePage):
-    """Dashboard page class"""
 
     def render(self):
-        """Render the Dashboard page"""
         st.title("SE Course Scheduler")
         
         st.markdown("---")
@@ -47,7 +45,6 @@ class DashboardPage(BasePage):
         st.text("Upload your course information from Excel files (.xlsx, .xls)")
         
         uploaded_file = st.file_uploader(
-            "Choose a file",
             type=['xlsx', 'xls'],
             key="course_upload",
             label_visibility="collapsed"
