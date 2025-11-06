@@ -1,6 +1,3 @@
-"""
-Configuration and styling for Streamlit application
-"""
 
 import streamlit as st
 
@@ -17,5 +14,4 @@ def setup_page_config():
 
 def apply_custom_css():
     """Apply custom CSS styling"""
-    # Currently no custom CSS needed
     pass

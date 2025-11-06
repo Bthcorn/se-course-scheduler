@@ -1,6 +1,3 @@
-"""
-Initialization functions for the Streamlit application
-"""
 
 import os
 import streamlit as st
@@ -10,7 +7,6 @@ from src.se_course_scheduler import CourseScheduler
 def initialize_scheduler():
     """Initialize the course scheduler"""
     try:
-        # Determine the correct path to scheduler.pl from any working directory
         current_file_path = os.path.abspath(__file__)
         project_root = os.path.dirname(os.path.dirname(current_file_path))
         prolog_path = os.path.join(project_root, "data", "scheduler.pl")

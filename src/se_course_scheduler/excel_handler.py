@@ -1,7 +1,3 @@
-"""
-Excel Handler for Course Scheduling System
-Handles loading course data from Excel files into Prolog
-"""
 
 import pandas as pd
 from pyswip import Prolog
@@ -17,17 +13,7 @@ class ExcelHandler:
         self.prolog = prolog
 
     def load_courses_from_excel(self, excel_file: str) -> None:
-        """
-        Load courses from Excel file and assert into Prolog
-        
-        Expected Excel sheet: "Courses"
-        Required columns: CourseID, CourseName, Year
-        
-        Example:
-        CourseID  | CourseName                | Year
-        cs101     | Programming Fundamentals  | 1
-        cs102     | Data Structures           | 1
-        """
+        """Load courses from Excel file and assert into Prolog"""
         try:
             df = pd.read_excel(excel_file, sheet_name="Courses")
             for _, row in df.iterrows():
@@ -35,7 +21,6 @@ class ExcelHandler:
                 course_name = str(row["CourseName"])
                 year = int(row["Year"])
 
-                # Create Prolog fact: course(CourseID, CourseName, Year)
                 course_query = (
                     f"assertz(course({course_id}, '{course_name}', {year}))"
                 )
@@ -48,32 +33,8 @@ class ExcelHandler:
             raise
 
     def load_professors_from_excel(self, excel_file: str) -> None:
-        """
-        Load professors, teaching capabilities, and preferences from Excel
-        
-        Expected Excel sheets:
-        1. "Professors" - Required columns: ProfessorID, ProfessorName
-        2. "CanTeach" - Required columns: ProfessorID, CourseID
-        3. "Preferences" - Optional columns: ProfessorID, Day, TimeSlot
-        
-        Example Professors sheet:
-        ProfessorID | ProfessorName
-        p001        | Dr. Smith
-        p002        | Dr. Johnson
-        
-        Example CanTeach sheet:
-        ProfessorID | CourseID
-        p001        | cs302
-        p001        | cs401
-        
-        Example Preferences sheet:
-        ProfessorID | Day       | TimeSlot
-        p001        | monday    | morning
-        p001        | wednesday | afternoon
-        p002        | _         | afternoon  (use '_' for any day)
-        """
+        """Load professors, teaching capabilities, and preferences from Excel"""
         try:
-            # Load professors
             df_prof = pd.read_excel(excel_file, sheet_name="Professors")
             for _, row in df_prof.iterrows():
                 professor_id = str(row["ProfessorID"])
@@ -84,7 +45,6 @@ class ExcelHandler:
                 _ = list(self.prolog.query(professor_query))
             print(f"✓ Loaded {len(df_prof)} professors from Excel")
             
-            # Load teaching capabilities
             df_teach = pd.read_excel(excel_file, sheet_name="CanTeach")
             for _, row in df_teach.iterrows():
                 teach_prof_id = str(row["ProfessorID"])
@@ -93,7 +53,6 @@ class ExcelHandler:
                 _ = list(self.prolog.query(teach_query))
             print(f"✓ Loaded {len(df_teach)} teaching capabilities from Excel")
             
-            # Load preferences (if available)
             try:
                 df_pref = pd.read_excel(excel_file, sheet_name="Preferences")
                 for _, row in df_pref.iterrows():
@@ -101,7 +60,6 @@ class ExcelHandler:
                     day = str(row["Day"]).lower()
                     time_slot = str(row["TimeSlot"]).lower()
                     
-                    # Use '_' for wildcard (any day)
                     if day == "_":
                         pref_query = f"assertz(prefers({pref_prof_id}, _, {time_slot}))"
                     else:
@@ -116,18 +74,11 @@ class ExcelHandler:
             raise
 
     def load_all_data_from_excel(self, excel_file: str) -> None:
-        """
-        Load all data (courses and professors) from Excel file
-        
-        IMPORTANT: Clears existing course/professor data before loading to prevent duplicates.
-        Assumption: Each course has exactly ONE professor who can teach it (no duplicates in CanTeach).
-        """
-        # Clear existing dynamic data to prevent duplicates
+        """Load all data (courses and professors) from Excel file"""
         self.prolog.retractall("course(_, _, _)")
         self.prolog.retractall("professor(_, _)")
         self.prolog.retractall("can_teach(_, _)")
         self.prolog.retractall("prefers(_, _, _)")
         
-        # Load fresh data from Excel
         self.load_courses_from_excel(excel_file)
         self.load_professors_from_excel(excel_file)

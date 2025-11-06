@@ -1,6 +1,3 @@
-"""
-Main module for the SE Course Scheduler
-"""
 
 import os
 
@@ -14,18 +11,14 @@ def main():
     print("SE COURSE SCHEDULING AGENT - POC".center(80))
     print("=" * 80 + "\n")
 
-    # Initialize scheduler
-    # Determine the correct path to scheduler.pl
     current_file_path = os.path.abspath(__file__)
     project_root = os.path.dirname(os.path.dirname(current_file_path))
     prolog_path = os.path.join(project_root, "data", "scheduler.pl")
 
     scheduler = CourseScheduler(prolog_path)
 
-    # Option 1: Use built-in data from Prolog file
     print("\n[Using built-in Prolog data]")
 
-    # Schedule all courses
     print("\nAttempting to schedule all courses...")
     result = scheduler.schedule_courses()
 
@@ -39,7 +32,6 @@ def main():
         print(f"\n✅ Successfully scheduled {len(result['schedules'])}/{result['total']} courses")
         print(f"  Algorithm used: {result.get('algorithm_used', 'Unknown')}")
         
-        # Print schedule summary
         schedule = scheduler.get_schedule()
         if schedule:
             print("\n" + "-" * 80)

@@ -1,6 +1,3 @@
-"""
-Base page class for all Streamlit pages
-"""
 
 from abc import ABC, abstractmethod
 from typing import Optional

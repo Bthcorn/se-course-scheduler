@@ -1,6 +1,3 @@
-"""
-Dashboard page for the Streamlit application
-"""
 
 import streamlit as st
 from web.views.base_page import BasePage
@@ -15,22 +12,18 @@ class DashboardPage(BasePage):
         
         st.markdown("---")
         
-        # Course Data Overview Section
         st.subheader("Course Data Overview")
         
-        # Get courses by year from Prolog
         years = [1, 2, 3, 4]
         cols = st.columns(2)
         
         for idx, year in enumerate(years):
             with cols[idx % 2]:
                 with st.container(border=True):
-                    # Query courses for this year
                     courses_query = f"course(CourseID, CourseName, {year}), can_teach(ProfID, CourseID), professor(ProfID, ProfName)"
                     courses = list(self.scheduler.prolog.query(courses_query))
                     
                     if courses:
-                        # Group courses by course ID to avoid duplicates
                         seen_courses = set()
                         course_list = []
                         for course in courses:
@@ -41,18 +34,15 @@ class DashboardPage(BasePage):
                                 prof_name = str(course["ProfName"])
                                 course_list.append(f"{len(course_list) + 1}. {course_name} ( Professor {prof_name} )")
                         
-                        # Display the header with count
                         st.markdown(f"**Year {year} ( {len(course_list)} courses )**")
                         for course_text in course_list:
                             st.text(course_text)
                     else:
-                        # Display the header with 0 count
                         st.markdown(f"**Year {year} ( 0 courses )**")
                         st.text("No courses available")
         
         st.markdown("---")
         
-        # Import Course Data Section
         st.subheader("Import Course Data")
         st.text("Upload your course information from Excel files (.xlsx, .xls)")
         
@@ -65,7 +55,6 @@ class DashboardPage(BasePage):
         
         if uploaded_file is not None:
             try:
-                # Save uploaded file temporarily
                 import tempfile
                 import os
                 
@@ -73,22 +62,17 @@ class DashboardPage(BasePage):
                     tmp_file.write(uploaded_file.getvalue())
                     tmp_path = tmp_file.name
                 
-                # Load data from Excel
                 with st.spinner("Loading data from Excel..."):
-                    # Clear existing dynamic course/professor data from Prolog
-                    # (Keep rooms and time slots which are hardcoded)
                     self.scheduler.prolog.retractall("course(_, _, _)")
                     self.scheduler.prolog.retractall("professor(_, _)")
                     self.scheduler.prolog.retractall("can_teach(_, _)")
                     self.scheduler.prolog.retractall("prefers(_, _, _)")
                     
-                    # Load new data from Excel
                     from src.se_course_scheduler.excel_handler import ExcelHandler
                     excel_handler = ExcelHandler(self.scheduler.prolog)
                     excel_handler.load_courses_from_excel(tmp_path)
                     excel_handler.load_professors_from_excel(tmp_path)
                 
-                # Clean up temporary file
                 os.unlink(tmp_path)
                 
                 st.success("✅ Successfully loaded course data from Excel!")
@@ -100,14 +84,11 @@ class DashboardPage(BasePage):
         
         st.markdown("---")
         
-        # Generate Schedules Button
         if st.button("Generate Schedules", type="primary", use_container_width=True):
             with st.spinner("Generating schedules using CSP with MCV + Forward Checking..."):
-                # Use MCV + Forward Checking algorithm
                 result = self.scheduler.schedule_courses()
                 
                 if not result:
-                    # CSP completely failed - impossible to schedule
                     st.error("❌ Unable to arrange all courses with current constraints")
                     st.markdown(
                         """
@@ -118,17 +99,14 @@ class DashboardPage(BasePage):
                         unsafe_allow_html=True
                     )
                 elif result.get("status") == "partial_failure":
-                    # Some courses couldn't be scheduled
                     unscheduled = result.get("unscheduled", [])
                     st.error(f"❌ Could not schedule {len(unscheduled)} courses: {', '.join(unscheduled)}")
                     st.info(f"Algorithm used: {result.get('algorithm_used', 'Unknown')}")
                     st.warning("Try reducing constraints (fewer reserved slots) or adding more rooms/time slots")
                 else:
-                    # Success!
                     st.session_state.schedule_result = result
                     st.session_state.schedule_generated = True
                     
-                    # Store success message to show after rerun
                     flagged_count = sum(1 for _, flag in result['schedules'] if flag == "preference_not_met")
                     total_scheduled = len(result['schedules'])
                     
@@ -140,7 +118,6 @@ class DashboardPage(BasePage):
                     
                     st.rerun()
         
-        # Display success/warning messages below the button
         if "generation_message" in st.session_state:
             st.success(st.session_state.generation_message)
             del st.session_state.generation_message
