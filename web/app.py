@@ -7,7 +7,6 @@ from web.views.schedules_page import SchedulesPage
 
 
 def main():
-    """Main Streamlit application"""
     setup_page_config()
     apply_custom_css()
 

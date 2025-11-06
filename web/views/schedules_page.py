@@ -4,10 +4,8 @@ from web.views.base_page import BasePage
 
 
 class SchedulesPage(BasePage):
-    """Schedules page - organized by year and by room"""
 
     def render(self):
-        """Render the Schedules page"""
         st.title("Recommended Schedules")
         
         schedule_generated = st.session_state.get("schedule_generated", False)
@@ -35,7 +33,6 @@ class SchedulesPage(BasePage):
             self.render_room_wise_schedules(schedules)
     
     def render_all_rooms_availability(self):
-        """Render all rooms showing only reserved slots"""
         rooms_query = "room(RoomID, Capacity)"
         all_rooms = list(self.scheduler.prolog.query(rooms_query))
         
@@ -62,7 +59,6 @@ class SchedulesPage(BasePage):
 
     
     def render_year_wise_schedules(self, schedules):
-        """Render schedules grouped by year"""
         st.subheader("Year-wise Weekly Schedules")
         
         years = sorted(set(int(data["year"]) for data, _ in schedules))
@@ -82,7 +78,6 @@ class SchedulesPage(BasePage):
             st.markdown("---")
     
     def render_room_wise_schedules(self, schedules):
-        """Render schedules grouped by room"""
         st.subheader("Room-wise Schedules & Availability")
         
         rooms_query = "room(RoomID, Capacity)"
@@ -112,7 +107,6 @@ class SchedulesPage(BasePage):
             st.markdown("---")
     
     def create_availability_table(self, room_id, room_schedules, room_reserved):
-        """Create HTML table showing room availability"""
         
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         time_slots = [
@@ -213,7 +207,6 @@ class SchedulesPage(BasePage):
 
     
     def create_schedule_table(self, schedules):
-        """Create HTML table for schedules"""
         if not schedules:
             return None
         

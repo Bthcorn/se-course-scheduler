@@ -1,15 +1,10 @@
 
-% ==================== ROOM FACTS ====================
-% Define available rooms with capacity
-% Format: room(RoomID, Capacity)
+% Room Facts
 % NOTE: Only 2 rooms available - will make scheduling impossible
 
 room(ecc802, 40).
 room(ecc803, 40).
 
-% ==================== TIME SLOT FACTS ====================
-% Define time slots
-% Format: time_slot(Day, TimeSlot, TimeRange)
 
 time_slot(monday, morning, '09:00-12:00').
 time_slot(monday, afternoon, '13:00-16:00').
@@ -33,9 +28,6 @@ time_slot(sunday, morning, '09:00-12:00').
 time_slot(sunday, afternoon, '13:00-16:00').
 time_slot(sunday, evening, '17:00-20:00').
 
-% ==================== COURSE FACTS ====================
-% Define courses
-% Format: course(CourseID, CourseName, Year)
 
 course(cs101, 'Programming Fundamentals', 1).
 course(cs102, 'Data Structures', 1).
@@ -50,9 +42,7 @@ course(cs401, 'Machine Learning', 4).
 course(cs402, 'Mobile Development', 4).
 course(cs403, 'Cloud Computing', 4).
 
-% ==================== PROFESSOR FACTS ====================
-% Define professors
-% Format: professor(ProfID, ProfName)
+
 
 professor(p001, 'Dr. Smith').
 professor(p002, 'Dr. Johnson').
@@ -65,9 +55,6 @@ professor(p008, 'Dr. Anderson').
 professor(p009, 'Dr. Martin').
 professor(p010, 'Dr. Garcia').
 
-% ==================== PROFESSOR PREFERENCE FACTS ====================
-% Define professor preferences for specific days and time slots
-% Format: prefers(ProfID, Day, TimeSlot)
 
 prefers(p001, monday, morning).
 prefers(p001, wednesday, afternoon).
@@ -89,9 +76,6 @@ prefers(p008, monday, morning).
 prefers(p009, friday, morning).
 prefers(p010, _, afternoon).
 
-% ==================== TEACHING CAPABILITY FACTS ====================
-% Define which professors can teach which courses
-% Format: can_teach(ProfID, CourseID)
 
 can_teach(p001, cs302).  % Dr. Smith - AI
 can_teach(p001, cs401).  % Dr. Smith - ML
@@ -108,10 +92,8 @@ can_teach(p008, cs402).  % Dr. Anderson - Mobile
 can_teach(p009, cs401).  % Dr. Martin - ML
 can_teach(p010, cs202).  % Dr. Garcia - Web
 
-% ==================== RESERVED TIME SLOT FACTS ====================
-% Define reserved time slots for special events
-% Format: reserved(Room, Day, TimeSlot, Reason)
-% NOTE: Massive reservations to block almost all available slots
+% Reserved time slots for special events
+% Massive reservations to block almost all available slots
 % With only 2 rooms and most slots reserved, scheduling 12 courses becomes impossible
 
 % Room ecc802 - Almost completely blocked
@@ -160,21 +142,15 @@ reserved(ecc803, sunday, morning, 'Closed').
 reserved(ecc803, sunday, afternoon, 'Closed').
 reserved(ecc803, sunday, evening, 'Closed').
 
-% ==================== DYNAMIC FACTS ====================
-% These facts will be dynamically asserted/retracted during scheduling
-% Format: scheduled(ProfID, Room, Day, TimeSlot, CourseID)
-
+% Dynamic Facts
 :- dynamic scheduled/5.
 
-% ==================== NOTES ====================
-% This file is designed to make scheduling IMPOSSIBLE:
-% 
 % 1. Only 2 rooms available (ecc802, ecc803)
 % 2. Both rooms have ALL time slots reserved (21 slots each = 42 total reservations)
 % 3. 12 courses need to be scheduled
 % 4. With 0 available slots across both rooms, scheduling is impossible
 % 
 % Expected Result:
-% - The scheduler will fail to find a valid schedule
-% - Should trigger error alert: "Unable to arrange all courses!"
-% - This tests the error handling in the system
+% The scheduler will fail to find a valid schedule
+% Should trigger error alert: "Unable to arrange all courses!"
+% This tests the error handling in the system

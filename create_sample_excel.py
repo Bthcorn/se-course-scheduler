@@ -1,20 +1,12 @@
-"""
-Script to create a sample Excel template for course scheduling data
-Run this to generate sample_course_data.xlsx
-"""
-
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import os
 
 def create_sample_excel():
-    """Create a sample Excel file with course scheduling data"""
     
-    # Create Excel writer
     output_file = 'data/sample_course_data.xlsx'
     
-    # Sample data for Courses
     courses_data = {
         'CourseID': [
             # Year 1 - 6 courses
@@ -48,7 +40,6 @@ def create_sample_excel():
         ]
     }
     
-    # Sample data for Professors
     professors_data = {
         'ProfessorID': ['p001', 'p002', 'p003', 'p004', 'p005', 
                         'p006', 'p007', 'p008', 'p009', 'p010',
@@ -58,8 +49,6 @@ def create_sample_excel():
                           'Dr. Lee', 'Dr. Martinez', 'Dr. Rodriguez', 'Dr. White', 'Dr. Harris']
     }
     
-    # Sample data for CanTeach (which professor can teach which course)
-    # Assign different professors to avoid preference conflicts
     can_teach_data = {
         'ProfessorID': [
             # Year 1 courses - 6 different professors
@@ -83,10 +72,8 @@ def create_sample_excel():
         ]
     }
     
-    # Sample data for Preferences
-    # Each professor gets ONE preference for their assigned course
-    # Spread across different days/times to maximize satisfaction
-    # Note: We have 8 reserved slots, so some preferences may conflict
+ 
+    # We have 8 reserved slots, so some preferences may conflict
     preferences_data = {
         'ProfessorID': [
             # Year 1 professors (cs101-cs106: p001-p006)
@@ -101,23 +88,23 @@ def create_sample_excel():
             'p007', 'p008', 'p009', 'p010'
         ],
         'Day': [
-            # Year 1 preferences - different days
+            # Year 1 preferences
             'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'monday',
-            # Year 2 preferences - different days
+            # Year 2 preferences
             'tuesday', 'wednesday', 'thursday', 'friday', 'monday', 'wednesday',
-            # Year 3 preferences - different days
+            # Year 3 preferences 
             'thursday', 'friday', 'tuesday',
             # Additional preferences for professors teaching 2 courses
-            'wednesday',  # p001 (2nd preference for cs304)
-            'thursday',   # p002 (2nd preference for cs403)
-            'thursday',   # p003 (2nd preference for cs306)
-            'monday',     # p004 (2nd preference for cs401)
-            'tuesday',    # p005 (2nd preference for cs402)
+            'wednesday', 
+            'thursday',   
+            'thursday',   
+            'monday',     
+            'tuesday',    
             # Year 4 additional professors
-            'wednesday',  # p007 (2nd preference for cs404)
-            'friday',     # p008 (2nd preference for cs405)
-            'monday',     # p009 (2nd preference for cs406)
-            'tuesday'     # p010 (2nd preference for cs305)
+            'wednesday',  
+            'friday',     
+            'monday',    
+            'tuesday'    
         ],
         'TimeSlot': [
             # Year 1 time slots - varied
@@ -182,13 +169,12 @@ def create_sample_excel():
                 adjusted_width = min(max_length + 2, 50)
                 sheet.column_dimensions[column_letter].width = adjusted_width
     
-    print(f"✅ Sample Excel file created successfully: {output_file}")
+    print(f"Sample Excel file created successfully: {output_file}")
     print("\nFile contains 4 sheets:")
-    print("  1. Courses - Course information (CourseID, CourseName, Year)")
-    print("  2. Professors - Professor information (ProfessorID, ProfessorName)")
-    print("  3. CanTeach - Teaching capabilities (ProfessorID, CourseID)")
-    print("  4. Preferences - Time preferences (ProfessorID, Day, TimeSlot)")
-    print("\nYou can use this file as a template for importing course data.")
+    print("  1. Courses ")
+    print("  2. Professors ")
+    print("  3. CanTeach ")
+    print("  4. Preferences")
 
 if __name__ == '__main__':
     create_sample_excel()
