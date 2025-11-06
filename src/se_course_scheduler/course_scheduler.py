@@ -48,52 +48,191 @@ class CourseScheduler:
         """Clear all scheduled courses"""
         query = "clear_schedule"
         _ = list(self.prolog.query(query))
-        print("✓ Cleared existing schedule")
 
-    def schedule_course(self, course_id: str) -> bool:
-        """Schedule a specific course"""
-        query = f"schedule_course({course_id})"
-        results = list(self.prolog.query(query))
-
-        if results:
-            print(f"✓ Scheduled course: {course_id}")
-            return True
-        else:
-            print(f"✗ Could not schedule course: {course_id}")
-            return False
-
-    def schedule_all_courses(self) -> dict[str, Any]:
-        """Attempt to schedule all courses"""
-        # Get all courses
-        courses_query = "course(CourseID, _, _, _, _)"
-        courses: list[dict[str, Any]] = list(self.prolog.query(courses_query))
-        self.clear_schedule()
-
-        scheduled: list[str] = []
-        failed: list[str] = []
-
-        # Try to schedule each course
-        for course in courses:
+    def get_courses_with_preferences(self) -> list[str]:
+        """
+        Get list of courses taught by professors who have time preferences.
+        
+        Returns:
+            List of course IDs where at least one qualified professor has preferences
+        """
+        courses_query = "course(CourseID, _, _)"
+        all_courses: list[dict[str, Any]] = list(self.prolog.query(courses_query))
+        
+        courses_with_prefs: list[str] = []
+        
+        for course in all_courses:
             course_id = str(course["CourseID"])
-            if self.schedule_course(course_id):
-                scheduled.append(course_id)
-            else:
-                failed.append(course_id)
+            
+            # Check if any professor who can teach this course has preferences
+            has_pref_query = f"can_teach(ProfID, {course_id}), has_preference(ProfID)"
+            has_pref = list(self.prolog.query(has_pref_query))
+            
+            if has_pref:
+                courses_with_prefs.append(course_id)
+        
+        return courses_with_prefs
 
+    def get_courses_without_preferences(self) -> list[str]:
+        """
+        Get list of courses taught by professors without time preferences.
+        
+        Returns:
+            List of course IDs where no qualified professor has preferences (flexible)
+        """
+        courses_query = "course(CourseID, _, _)"
+        all_courses: list[dict[str, Any]] = list(self.prolog.query(courses_query))
+        
+        courses_without_prefs: list[str] = []
+        
+        for course in all_courses:
+            course_id = str(course["CourseID"])
+            
+            # Check if any professor who can teach this course has preferences
+            has_pref_query = f"can_teach(ProfID, {course_id}), has_preference(ProfID)"
+            has_pref = list(self.prolog.query(has_pref_query))
+            
+            if not has_pref:
+                courses_without_prefs.append(course_id)
+        
+        return courses_without_prefs
+
+    def schedule_courses(self) -> dict[str, Any]:
+        """
+        Schedule all courses using CSP with MCV + Forward Checking.
+        Automatically clears previous schedule before scheduling.
+        
+        Algorithm: MCV + Forward Checking
+        - Uses Most Constrained Variable heuristic (schedule hard courses first)
+        - Uses Forward Checking to prune search space after each assignment
+        - Full backtracking ensures complete and sound solutions
+        - Optimal balance between speed and quality
+        
+        Returns:
+            dict with:
+                - schedules: list of (course_data, flag) tuples
+                  flag = "preference_not_met" if course didn't get preferred slot
+                - total: total number of courses
+                - unscheduled: list of course IDs that couldn't be scheduled
+                - algorithm_used: which algorithm was used
+                
+            If returned dict is empty {}, it means scheduling is impossible.
+        """
+        # Always clear previous schedule first
+        self.clear_schedule()
+        
+        # Get all courses
+        courses_query = "course(CourseID, _, _)"
+        all_courses_result: list[dict[str, Any]] = list(self.prolog.query(courses_query))
+        
+        if not all_courses_result:
+            return {}  # No courses to schedule
+        
+        # Extract course IDs
+        all_course_ids = [str(c["CourseID"]) for c in all_courses_result]
+        
+        # Use MCV + Forward Checking
+        csp_query = "schedule_all_with_forward_checking"
+        algorithm_used = "CSP with MCV + Forward Checking"
+        
+        try:
+            # Execute CSP scheduling
+            # This will either succeed (scheduling all courses) or fail (backtrack exhausted all possibilities)
+            csp_result = list(self.prolog.query(csp_query))
+            
+            if not csp_result:
+                # CSP failed - no valid complete schedule exists
+                # Check partial schedule for debugging
+                partial_schedule = self.get_schedule()
+                
+                if not partial_schedule:
+                    # Truly impossible - no courses could be scheduled
+                    return {}
+                
+                # Some courses were scheduled before failure
+                scheduled_ids = [s["course_id"] for s in partial_schedule]
+                unscheduled_ids = [cid for cid in all_course_ids if cid not in scheduled_ids]
+                
+                # Clear the partial schedule
+                self.clear_schedule()
+                
+                return {
+                    "schedules": [],
+                    "total": len(all_course_ids),
+                    "unscheduled": unscheduled_ids,
+                    "algorithm_used": algorithm_used,
+                    "status": "partial_failure"
+                }
+            
+        except Exception as e:
+            # Prolog query error
+            print(f"CSP scheduling error: {e}")
+            return {}
+        
+        # CSP succeeded! Get the full schedule
+        schedule_details = self.get_schedule()
+        
+        if not schedule_details:
+            # This shouldn't happen if CSP succeeded, but handle it
+            return {}
+        
+        # Analyze which courses didn't get their preferred slots
+        schedules_with_flags = []
+        
+        for detail in schedule_details:
+            course_id = detail["course_id"]
+            prof_name = detail["professor"]
+            day = detail["day"]
+            timeslot = detail["timeslot"]
+            
+            # Check if this course is taught by a professor with preferences
+            has_pref_query = f"can_teach(ProfID, {course_id}), professor(ProfID, '{prof_name}'), has_preference(ProfID)"
+            has_pref_result = list(self.prolog.query(has_pref_query))
+            
+            if has_pref_result:
+                # Professor has preferences - check if this slot matches
+                prof_id_query = f"professor(ProfID, '{prof_name}')"
+                prof_id_result = list(self.prolog.query(prof_id_query))
+                
+                if prof_id_result:
+                    prof_id = prof_id_result[0]["ProfID"]
+                    
+                    # Check if scheduled slot matches preference
+                    pref_match_query = f"prefers({prof_id}, {day}, {timeslot})"
+                    pref_match = list(self.prolog.query(pref_match_query))
+                    
+                    # Also check wildcard preferences (day = '_')
+                    pref_wildcard_query = f"prefers({prof_id}, _, {timeslot})"
+                    pref_wildcard = list(self.prolog.query(pref_wildcard_query))
+                    
+                    if not pref_match and not pref_wildcard:
+                        # Has preference but didn't get it
+                        flag = "preference_not_met"
+                    else:
+                        flag = None
+                else:
+                    flag = None
+            else:
+                # No preferences for this course
+                flag = None
+            
+            schedules_with_flags.append((detail, flag))
+        
         return {
-            "scheduled": scheduled,
-            "failed": failed,
-            "total": len(courses),
-            "success_rate": len(scheduled) / len(courses) * 100 if courses else 0,
+            "schedules": schedules_with_flags,
+            "total": len(all_course_ids),
+            "unscheduled": [],  # Empty if CSP succeeded
+            "algorithm_used": algorithm_used,
+            "status": "success"
         }
 
     def get_schedule(self) -> list[dict[str, str]]:
         """Retrieve the complete schedule"""
         query = (
-            "scheduled(ProfID, Room, Day, Period, CourseID), "
-            "course(CourseID, CourseName, Year, _, _), "
+            "scheduled(ProfID, Room, Day, TimeSlot, CourseID), "
+            "course(CourseID, CourseName, Year), "
             "professor(ProfID, ProfName), "
-            "time_slot(Day, Period, TimeRange)"
+            "time_slot(Day, TimeSlot, TimeRange)"
         )
         results: list[dict[str, Any]] = list(self.prolog.query(query))
 
@@ -110,7 +249,7 @@ class CourseScheduler:
                     "professor": str(r["ProfName"]),
                     "room": str(r["Room"]),
                     "day": str(r["Day"]),
-                    "period": str(r["Period"]),
+                    "timeslot": str(r["TimeSlot"]),
                     "time_range": str(r["TimeRange"]),
                 }
             )
@@ -119,7 +258,7 @@ class CourseScheduler:
 
     def get_reserved_slots(self) -> list[dict[str, str]]:
         """Retrieve all reserved time slots"""
-        query = "reserved(Room, Day, Period, Reason), time_slot(Day, Period, TimeRange)"
+        query = "reserved(Room, Day, TimeSlot, Reason), time_slot(Day, TimeSlot, TimeRange)"
         results: list[dict[str, Any]] = list(self.prolog.query(query))
 
         if not results:
@@ -131,7 +270,7 @@ class CourseScheduler:
                 {
                     "room": str(r["Room"]),
                     "day": str(r["Day"]),
-                    "period": str(r["Period"]),
+                    "timeslot": str(r["TimeSlot"]),
                     "time_range": str(r["TimeRange"]),
                     "reason": str(r["Reason"]),
                 }
@@ -142,10 +281,10 @@ class CourseScheduler:
     def get_room_schedule(self, room: str) -> list[dict[str, str]]:
         """Get schedule for a specific room"""
         query = (
-            f"scheduled(ProfID, {room}, Day, Period, CourseID), "
-            "course(CourseID, CourseName, _, _, _), "
+            f"scheduled(ProfID, {room}, Day, TimeSlot, CourseID), "
+            "course(CourseID, CourseName, _), "
             "professor(ProfID, ProfName), "
-            "time_slot(Day, Period, TimeRange)"
+            "time_slot(Day, TimeSlot, TimeRange)"
         )
         results: list[dict[str, Any]] = list(self.prolog.query(query))
 
@@ -160,24 +299,12 @@ class CourseScheduler:
                     "course_name": str(r["CourseName"]),
                     "professor": str(r["ProfName"]),
                     "day": str(r["Day"]),
-                    "period": str(r["Period"]),
+                    "timeslot": str(r["TimeSlot"]),
                     "time_range": str(r["TimeRange"]),
                 }
             )
 
         return schedule
-
-    def validate_schedule(self) -> bool:
-        """Validate the schedule for conflicts"""
-        query = "validate_schedule"
-        results: list[dict[str, Any]] = list(self.prolog.query(query))
-
-        if results:
-            print("✓ Schedule validation passed - No conflicts found")
-            return True
-        else:
-            print("✗ Schedule validation failed - Conflicts detected")
-            return False
 
     def get_statistics(self) -> dict[str, Any]:
         """Get scheduling statistics"""
@@ -226,91 +353,3 @@ class CourseScheduler:
         self.excel_handler.export_schedule_to_excel(
             schedule, reserved, stats, output_file
         )
-
-    def print_schedule_summary(self) -> None:
-        """Print a formatted summary of the schedule"""
-        schedule = self.get_schedule()
-        reserved = self.get_reserved_slots()
-
-        print("\n" + "=" * 80)
-        print("GENERATED SCHEDULE SUMMARY".center(80))
-        print("=" * 80 + "\n")
-
-        # Get all rooms that have either scheduled or reserved slots
-        all_rooms: set[str] = set()
-        for item in schedule:
-            all_rooms.add(item["room"])
-        for item in reserved:
-            all_rooms.add(item["room"])
-
-        if not schedule and not reserved:
-            print("No courses scheduled and no reserved slots.")
-            return
-
-        for room in sorted(all_rooms):
-            print(f"\n{'Room ' + room.upper():^80}")
-            print("-" * 80)
-            print(
-                f"{'Day':<12} {'Period':<12} {'Time':<15} "
-                f"{'Course/Activity':<25} {'Professor/Organizer':<20}"
-            )
-            print("-" * 80)
-
-            # Get all time slots for this room
-            room_schedule: list[dict[str, Any]] = [
-                cls for cls in schedule if cls["room"] == room
-            ]
-            room_reserved: list[dict[str, Any]] = [
-                res for res in reserved if res["room"] == room
-            ]
-
-            # Combine and sort all slots
-            all_slots: list[dict[str, Any]] = []
-
-            # Add scheduled courses
-            for cls in room_schedule:
-                course_slot: dict[str, Any] = {
-                    "day": cls["day"],
-                    "period": cls["period"],
-                    "time_range": cls["time_range"],
-                    "activity": cls["course_name"],
-                    "person": cls["professor"],
-                    "type": "course",
-                }
-                all_slots.append(course_slot)
-
-            # Add reserved slots
-            for res in room_reserved:
-                reserved_slot: dict[str, Any] = {
-                    "day": res["day"],
-                    "period": res["period"],
-                    "time_range": res["time_range"],
-                    "activity": f"[RESERVED] {res['reason']}",
-                    "person": "N/A",
-                    "type": "reserved",
-                }
-                all_slots.append(reserved_slot)
-
-            # Sort by day and period
-            for slot in sorted(all_slots, key=lambda x: (x["day"], x["period"])):
-                print(
-                    f"{slot['day']:<12} {slot['period']:<12} "
-                    f"{slot['time_range']:<15} {slot['activity']:<25} "
-                    f"{slot['person']:<20}"
-                )
-
-        print("\n" + "=" * 80)
-
-        # Print statistics
-        stats = self.get_statistics()
-        print(f"\nTotal Scheduled Courses: {stats['scheduled_courses']}")
-        print("\nRoom Utilization:")
-        room_util_data = stats.get("room_utilization", [])
-        if isinstance(room_util_data, list):
-            for room_stat in room_util_data:
-                room_name = str(room_stat["room"]).upper()
-                utilization_str = (
-                    f"  {room_name}: {room_stat['utilization']:.1f}% "
-                    f"({room_stat['used_slots']}/{room_stat['total_slots']} slots)"
-                )
-                print(utilization_str)

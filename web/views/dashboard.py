@@ -3,205 +3,170 @@ Dashboard page for the Streamlit application
 """
 
 import streamlit as st
-import streamlit_shadcn_ui as ui
-from web.utils import check_scheduler_initialized, display_messages
-from web.components import display_schedule_table
 from web.views.base_page import BasePage
 
 
 class DashboardPage(BasePage):
     """Dashboard page class"""
 
-    @staticmethod
-    def render_action_card(
-        title: str,
-        description: str,
-        button_text: str,
-        button_key: str,
-        button_variant: str,
-        gradient_start: str,
-        gradient_end: str,
-        border_color: str,
-    ):
-        """Render a reusable action card component"""
-        _ = st.markdown(
-            f"""
-            <div style='padding: 1rem; border-radius: 0.5rem; 
-            background: linear-gradient(135deg, {gradient_start}08 0%, {gradient_end}08 100%);
-            border-left: 4px solid {border_color}; margin-bottom: 1rem;
-            text-align: center;'>
-            <h4 style='color: #1f77b4; margin: 0 0 0.5rem 0; font-weight: 600;'>
-            {title}</h4>
-            <p style='margin: 0 0 1rem 0; color: #666; font-size: 0.9em;'>
-            {description}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return ui.button(
-            key=button_key,
-            text=button_text,
-            variant=button_variant,
-            size="lg",
-            width="stretch",
-        )
-
     def render(self):
         """Render the Dashboard page"""
-        _ = st.header("Dashboard")
-        display_messages()
-
-        # Metrics
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            ui.metric_card(
-                title="Scheduled Courses",
-                content=f"{len(st.session_state.current_schedule)}",
-                description="total scheduled courses",
-                key="schedule_count_card",
-            )
-
-        with col2:
-            ui.metric_card(
-                title="Reserved Slots",
-                content=f"{len(st.session_state.current_reserved)}",
-                description="total reserved slots",
-                key="reserved_count_card",
-            )
-
-        with col3:
-            total_rooms = len(
-                set(
-                    [
-                        item["room"]
-                        for item in st.session_state.current_schedule
-                        + st.session_state.current_reserved
-                    ]
-                )
-            )
-            ui.metric_card(
-                title="Active Rooms",
-                content=f"{total_rooms}",
-                description="total active rooms",
-                key="active_rooms_card",
-            )
-
-        with col4:
-            result = st.session_state.get("schedule_result", {})
-            success_rate = result.get("success_rate", 0)
-            ui.metric_card(
-                title="Success Rate",
-                content=f"{success_rate:.1f}%" if success_rate > 0 else "N/A",
-                description="success rate",
-                key="success_rate_card",
-            )
-
-        # Quick actions
-        _ = st.markdown("### Quick Actions")
-        _ = st.markdown("<br>", unsafe_allow_html=True)
-
-        col1, col2, col3 = st.columns(3, gap="large")
-
-        with col1:
-            with st.container():
-                if self.render_action_card(
-                    title="🔄 Schedule Courses",
-                    description="Generate schedule for all available courses",
-                    button_text="Schedule All Courses",
-                    button_key="schedule_courses_btn",
-                    button_variant="default",
-                    gradient_start="#667eea",
-                    gradient_end="#764ba2",
-                    border_color="#667eea",
-                ):
-                    self.scheduler = check_scheduler_initialized(self.scheduler)
-
-                    with st.spinner("Scheduling courses..."):
-                        result = self.scheduler.schedule_all_courses()
-                        st.session_state.schedule_result = result
-                        st.session_state.schedule_generated = True
-                        st.session_state.current_schedule = (
-                            self.scheduler.get_schedule()
-                        )
-                        st.session_state.current_reserved = (
-                            self.scheduler.get_reserved_slots()
-                        )
-                        st.session_state.current_stats = self.scheduler.get_statistics()
-
-                        if result.get("scheduled"):
-                            st.session_state.success_message = (
-                                f"Successfully scheduled "
-                                f"{len(result['scheduled'])} courses!"
-                            )
-
-                        if result.get("failed"):
-                            st.session_state.warning_message = (
-                                f"Failed to schedule {len(result['failed'])} "
-                                f"courses: {', '.join(result['failed'])}"
-                            )
-
-                        st.rerun()
-
-        with col2:
-            with st.container():
-                if self.render_action_card(
-                    title="🗑️ Clear Schedule",
-                    description="Remove all scheduled courses and reset",
-                    button_text="Clear Schedule",
-                    button_key="clear_schedule_btn",
-                    button_variant="destructive",
-                    gradient_start="#f093fb",
-                    gradient_end="#f5576c",
-                    border_color="#f5576c",
-                ):
-                    self.scheduler = check_scheduler_initialized(self.scheduler)
-
-                    self.scheduler.clear_schedule()
-                    st.session_state.schedule_generated = False
-                    st.session_state.current_schedule = []
-                    st.session_state.current_reserved = []
-                    st.session_state.current_stats = {}
-                    st.session_state.schedule_result = {}
-                    st.session_state.success_message = "Schedule cleared!"
-                    st.rerun()
-
-        with col3:
-            with st.container():
-                if self.render_action_card(
-                    title="✅ Validate Schedule",
-                    description="Check for conflicts and constraint violations",
-                    button_text="Validate Schedule",
-                    button_key="validate_btn",
-                    button_variant="outline",
-                    gradient_start="#4facfe",
-                    gradient_end="#00f2fe",
-                    border_color="#4facfe",
-                ):
-                    self.scheduler = check_scheduler_initialized(self.scheduler)
-
-                    if self.scheduler.validate_schedule():
-                        st.session_state.success_message = (
-                            "Schedule validation passed - No conflicts found!"
-                        )
+        st.title("SE Course Scheduler")
+        
+        # Available Rooms Section
+        st.subheader("Available Rooms")
+        
+        # Get room data from Prolog
+        rooms_query = "room(RoomID, Capacity)"
+        rooms = list(self.scheduler.prolog.query(rooms_query))
+        
+        # Display rooms as buttons/chips
+        if rooms:
+            cols = st.columns(len(rooms))
+            for idx, room_data in enumerate(rooms):
+                with cols[idx]:
+                    st.button(
+                        str(room_data["RoomID"]).upper(),
+                        key=f"room_btn_{idx}",
+                        use_container_width=True
+                    )
+        
+        st.markdown("---")
+        
+        # Course Data Overview Section
+        st.subheader("Course Data Overview")
+        
+        # Get courses by year from Prolog
+        years = [1, 2, 3, 4]
+        cols = st.columns(2)
+        
+        for idx, year in enumerate(years):
+            with cols[idx % 2]:
+                with st.container(border=True):
+                    # Query courses for this year
+                    courses_query = f"course(CourseID, CourseName, {year}), can_teach(ProfID, CourseID), professor(ProfID, ProfName)"
+                    courses = list(self.scheduler.prolog.query(courses_query))
+                    
+                    if courses:
+                        # Group courses by course ID to avoid duplicates
+                        seen_courses = set()
+                        course_list = []
+                        for course in courses:
+                            course_id = str(course["CourseID"])
+                            if course_id not in seen_courses:
+                                seen_courses.add(course_id)
+                                course_name = str(course["CourseName"])
+                                prof_name = str(course["ProfName"])
+                                course_list.append(f"{len(course_list) + 1}. {course_name} ( Professor {prof_name} )")
+                        
+                        # Display the header with count
+                        st.markdown(f"**Year {year} ( {len(course_list)} courses )**")
+                        for course_text in course_list:
+                            st.text(course_text)
                     else:
-                        st.session_state.warning_message = (
-                            "Schedule validation failed - Conflicts detected!"
-                        )
-
-                    # Refresh to show the message
+                        # Display the header with 0 count
+                        st.markdown(f"**Year {year} ( 0 courses )**")
+                        st.text("No courses available")
+        
+        st.markdown("---")
+        
+        # Import Course Data Section
+        st.subheader("Import Course Data")
+        st.text("Upload your course information from Excel files (.xlsx, .xls)")
+        
+        uploaded_file = st.file_uploader(
+            "Choose a file",
+            type=['xlsx', 'xls'],
+            key="course_upload",
+            label_visibility="collapsed"
+        )
+        
+        if uploaded_file is not None:
+            try:
+                # Save uploaded file temporarily
+                import tempfile
+                import os
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                    tmp_file.write(uploaded_file.getvalue())
+                    tmp_path = tmp_file.name
+                
+                # Load data from Excel
+                with st.spinner("Loading data from Excel..."):
+                    # Clear existing dynamic course/professor data from Prolog
+                    # (Keep rooms and time slots which are hardcoded)
+                    self.scheduler.prolog.retractall("course(_, _, _)")
+                    self.scheduler.prolog.retractall("professor(_, _)")
+                    self.scheduler.prolog.retractall("can_teach(_, _)")
+                    self.scheduler.prolog.retractall("prefers(_, _, _)")
+                    
+                    # Load new data from Excel
+                    from src.se_course_scheduler.excel_handler import ExcelHandler
+                    excel_handler = ExcelHandler(self.scheduler.prolog)
+                    excel_handler.load_courses_from_excel(tmp_path)
+                    excel_handler.load_professors_from_excel(tmp_path)
+                
+                # Clean up temporary file
+                os.unlink(tmp_path)
+                
+                st.success("✅ Successfully loaded course data from Excel!")
+                st.info("ℹ️ Rooms and time slots are using hardcoded facts (not imported from Excel)")
+                
+            except Exception as e:
+                st.error(f"❌ Error loading Excel file: {str(e)}")
+                st.info("Please ensure your Excel file has the required sheets: Courses, Professors, CanTeach, and optionally Preferences")
+        
+        st.markdown("---")
+        
+        # Generate Schedules Button
+        if st.button("Generate Schedules", type="primary", use_container_width=True):
+            with st.spinner("Generating schedules using CSP with MCV + Forward Checking..."):
+                # Use MCV + Forward Checking algorithm
+                result = self.scheduler.schedule_courses()
+                
+                if not result:
+                    # CSP completely failed - impossible to schedule
+                    st.error("❌ Unable to arrange all courses with current constraints")
+                    st.markdown(
+                        """
+                        <script>
+                        alert("Unable to arrange all courses! No valid schedule exists.");
+                        </script>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                elif result.get("status") == "partial_failure":
+                    # Some courses couldn't be scheduled
+                    unscheduled = result.get("unscheduled", [])
+                    st.error(f"❌ Could not schedule {len(unscheduled)} courses: {', '.join(unscheduled)}")
+                    st.info(f"Algorithm used: {result.get('algorithm_used', 'Unknown')}")
+                    st.warning("Try reducing constraints (fewer reserved slots) or adding more rooms/time slots")
+                else:
+                    # Success!
+                    st.session_state.schedule_result = result
+                    st.session_state.schedule_generated = True
+                    
+                    # Store success message to show after rerun
+                    flagged_count = sum(1 for _, flag in result['schedules'] if flag == "preference_not_met")
+                    total_scheduled = len(result['schedules'])
+                    
+                    st.session_state.generation_message = f"✅ Successfully scheduled {total_scheduled}/{result['total']} courses!"
+                    st.session_state.generation_info = f"ℹ️ Algorithm: {result.get('algorithm_used', 'CSP Backtracking')}"
+                    
+                    if flagged_count > 0:
+                        st.session_state.generation_warning = f"⚠️ {flagged_count} courses did not get their preferred time slots (but all courses are scheduled)"
+                    
                     st.rerun()
-
-        # Recent schedule preview
-        if st.session_state.current_schedule:
-            _ = st.markdown("<br>", unsafe_allow_html=True)
-            _ = st.subheader("Recent Schedule Preview")
-            display_schedule_table(
-                st.session_state.current_schedule[:10], "Recent Schedule"
-            )
-
-            if len(st.session_state.current_schedule) > 10:
-                _ = st.info(
-                    f"Showing first 10 of {len(st.session_state.current_schedule)} "
-                    "scheduled courses. Use 'Timetable View' for complete details."
-                )
+        
+        # Display success/warning messages below the button
+        if "generation_message" in st.session_state:
+            st.success(st.session_state.generation_message)
+            del st.session_state.generation_message
+        
+        if "generation_info" in st.session_state:
+            st.info(st.session_state.generation_info)
+            del st.session_state.generation_info
+        
+        if "generation_warning" in st.session_state:
+            st.warning(st.session_state.generation_warning)
+            del st.session_state.generation_warning

@@ -5,12 +5,9 @@ A comprehensive web interface for course scheduling using Prolog
 
 import streamlit as st
 from web.config import setup_page_config, apply_custom_css
-from web.utils import initialize_scheduler, initialize_session_state, setup_navigation
+from web.utils import initialize_scheduler, initialize_session_state
 from web.views.dashboard import DashboardPage
 from web.views.timetable_view import TimetableViewPage
-from web.views.statistics import StatisticsPage
-from web.views.settings import SettingsPage
-from web.views.export import ExportPage
 
 
 def main():
@@ -18,12 +15,6 @@ def main():
     # Setup page configuration and styling
     setup_page_config()
     apply_custom_css()
-
-    # Header
-    _ = st.markdown(
-        '<h1 class="main-header">📚 SE Course Scheduler</h1>',
-        unsafe_allow_html=True,
-    )
 
     # Initialize scheduler (store in session state to persist across reruns)
     if "scheduler" not in st.session_state:
@@ -35,27 +26,28 @@ def main():
     else:
         scheduler = st.session_state.scheduler
 
-    # Setup navigation
-    page = setup_navigation()
-
     # Initialize session state
     initialize_session_state()
 
-    # Route to appropriate page using classes
-    if page == "🏠 Dashboard":
+    # Simple navigation buttons
+    st.sidebar.title("Navigation")
+    
+    if st.sidebar.button("Navigation", use_container_width=True):
+        st.session_state.page = "Dashboard"
+    
+    if st.sidebar.button("Schedules", use_container_width=True):
+        st.session_state.page = "Schedules"
+
+    # Default page
+    if "page" not in st.session_state:
+        st.session_state.page = "Dashboard"
+
+    # Route to appropriate page
+    if st.session_state.page == "Dashboard":
         page_instance = DashboardPage(scheduler)
         page_instance.render()
-    elif page == "📅 Timetable View":
+    elif st.session_state.page == "Schedules":
         page_instance = TimetableViewPage(scheduler)
-        page_instance.render()
-    elif page == "📈 Statistics":
-        page_instance = StatisticsPage(scheduler)
-        page_instance.render()
-    elif page == "⚙️ Settings":
-        page_instance = SettingsPage(scheduler)
-        page_instance.render()
-    elif page == "📤 Export":
-        page_instance = ExportPage(scheduler)
         page_instance.render()
 
 
