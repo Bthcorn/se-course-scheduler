@@ -1,4 +1,3 @@
-
 import streamlit as st
 from web.config import setup_page_config, apply_custom_css
 from web.scheduler_initializer import initialize_scheduler, initialize_session_state
@@ -11,7 +10,7 @@ def main():
     apply_custom_css()
 
     initialize_session_state()
-    
+
     if "scheduler" not in st.session_state:
         scheduler, error = initialize_scheduler()
         if error:
@@ -28,10 +27,10 @@ def main():
         scheduler = st.session_state.scheduler
 
     st.sidebar.title("Navigation")
-    
+
     if st.sidebar.button("Dashboard", use_container_width=True):
         st.session_state.page = "Dashboard"
-    
+
     if st.sidebar.button("Schedules", use_container_width=True):
         st.session_state.page = "Schedules"
 
