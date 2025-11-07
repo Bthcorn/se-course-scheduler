@@ -48,10 +48,6 @@ clear_schedule :-
     retractall(scheduled(_, _, _, _, _)).
 
 
-
-% CSP scheduling for a single course - tries preferred first, then fallback
-% Used by MCV and Forward Checking algorithms
-% Clause 1: Try preferred assignment
 schedule_course_csp(CourseID, ProfID, Room, Day, TimeSlot) :-
     find_preferred_assignment(CourseID, ProfID, Room, Day, TimeSlot).
 
@@ -118,16 +114,19 @@ pairs_values([_-Value|Rest], [Value|Values]) :-
 
 schedule_all_with_forward_checking :-
     findall(CourseID, course(CourseID, _, _), AllCourses),
-    sort_by_constraints(AllCourses, SortedCourses),
-    schedule_with_fc(SortedCourses).
+    schedule_with_dynamic_mcv(AllCourses).
 
-schedule_with_fc([]).  % Base case
+schedule_with_dynamic_mcv([]).
 
-schedule_with_fc([CourseID|Rest]) :-
-    schedule_course_csp(CourseID, ProfID, Room, Day, TimeSlot),
-    assertz(scheduled(ProfID, Room, Day, TimeSlot, CourseID)),
-    check_remaining_feasible(Rest),
-    schedule_with_fc(Rest).
+schedule_with_dynamic_mcv(RemainingCourses) :-
+
+    sort_by_constraints(RemainingCourses, [MostConstrained|OtherCourses]),
+    schedule_course_csp(MostConstrained, ProfID, Room, Day, TimeSlot),
+    assertz(scheduled(ProfID, Room, Day, TimeSlot, MostConstrained)),
+    
+    check_remaining_feasible(OtherCourses),
+    
+    schedule_with_dynamic_mcv(OtherCourses).
 
 check_remaining_feasible([]).
 check_remaining_feasible([CourseID|Rest]) :-
