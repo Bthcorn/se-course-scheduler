@@ -1,4 +1,3 @@
-
 import os
 
 from .se_course_scheduler import CourseScheduler
@@ -26,12 +25,16 @@ def main():
         print("\n❌ Unable to schedule courses - no valid schedule exists")
     elif result.get("status") == "partial_failure":
         unscheduled = result.get("unscheduled", [])
-        print(f"\n⚠️  Partially scheduled: {len(result['schedules'])}/{result['total']} courses")
-        print(f"  Failed to schedule: {', '.join(unscheduled)}")
+        print(
+            f"\n! Partially scheduled: {len(result['schedules'])}/{result['total']} courses"
+        )
+        print(f"  ! Failed to schedule: {', '.join(unscheduled)}")
     else:
-        print(f"\n✅ Successfully scheduled {len(result['schedules'])}/{result['total']} courses")
+        print(
+            f"\n Successfully scheduled {len(result['schedules'])}/{result['total']} courses"
+        )
         print(f"  Algorithm used: {result.get('algorithm_used', 'Unknown')}")
-        
+
         schedule = scheduler.get_schedule()
         if schedule:
             print("\n" + "-" * 80)
@@ -40,7 +43,9 @@ def main():
             for item in schedule:
                 print(f"  {item['course_name']} ({item['course_id']})")
                 print(f"    Professor: {item['professor']}")
-                print(f"    Room: {item['room']}, {item['day']} {item['timeslot']} ({item['time_range']})")
+                print(
+                    f"    Room: {item['room']}, {item['day']} {item['timeslot']} ({item['time_range']})"
+                )
                 print()
 
     print("\n" + "=" * 80)
