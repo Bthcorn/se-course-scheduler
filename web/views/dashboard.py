@@ -7,14 +7,11 @@ class DashboardPage(BasePage):
     def render(self):
         st.title("SE Course Scheduler")
 
-        # Available Rooms Section
         st.subheader("Available Rooms")
 
-        # Get room data from Prolog
         rooms_query = "room(RoomID, Capacity)"
         rooms = list(self.scheduler.prolog.query(rooms_query))
 
-        # Display rooms as buttons/chips
         if rooms:
             cols = st.columns(len(rooms))
             for idx, room_data in enumerate(rooms):
@@ -95,13 +92,13 @@ class DashboardPage(BasePage):
 
                 os.unlink(tmp_path)
 
-                st.success("✅ Successfully loaded course data from Excel!")
+                st.success("Successfully loaded course data from Excel!")
                 st.info(
-                    "ℹ️ Rooms and time slots are using hardcoded facts (not imported from Excel)"
+                    "Rooms and time slots are using hardcoded facts (not imported from Excel)"
                 )
 
             except Exception as e:
-                st.error(f"❌ Error loading Excel file: {str(e)}")
+                st.error(f"Error loading Excel file: {str(e)}")
                 st.info(
                     "Please ensure your Excel file has the required sheets: Courses, Professors, CanTeach, and optionally Preferences"
                 )
@@ -115,9 +112,7 @@ class DashboardPage(BasePage):
                 result = self.scheduler.schedule_courses()
 
                 if not result:
-                    st.error(
-                        "❌ Unable to arrange all courses with current constraints"
-                    )
+                    st.error("Unable to arrange all courses with current constraints")
                     st.markdown(
                         """
                         <script>
@@ -129,7 +124,7 @@ class DashboardPage(BasePage):
                 elif result.get("status") == "partial_failure":
                     unscheduled = result.get("unscheduled", [])
                     st.error(
-                        f"❌ Could not schedule {len(unscheduled)} courses: {', '.join(unscheduled)}"
+                        f"Could not schedule {len(unscheduled)} courses: {', '.join(unscheduled)}"
                     )
                     st.info(
                         f"Algorithm used: {result.get('algorithm_used', 'Unknown')}"
@@ -148,11 +143,13 @@ class DashboardPage(BasePage):
                     )
                     total_scheduled = len(result["schedules"])
 
-                    st.session_state.generation_message = f"✅ Successfully scheduled {total_scheduled}/{result['total']} courses!"
-                    st.session_state.generation_info = f"ℹ️ Algorithm: {result.get('algorithm_used', 'CSP Backtracking')}"
+                    st.session_state.generation_message = f"Successfully scheduled {total_scheduled}/{result['total']} courses!"
+                    st.session_state.generation_info = (
+                        f"Algorithm: {result.get('algorithm_used', 'CSP Backtracking')}"
+                    )
 
                     if flagged_count > 0:
-                        st.session_state.generation_warning = f"⚠️ {flagged_count} courses did not get their preferred time slots (but all courses are scheduled)"
+                        st.session_state.generation_warning = f"{flagged_count} courses did not get their preferred time slots (but all courses are scheduled)"
 
                     st.rerun()
 
