@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""
-Launcher script for the Streamlit Course Scheduler application
-"""
 
 import subprocess
 import sys
 
 
 def main():
-    """Launch the Streamlit application"""
 
     app_path = "web/streamlit_app.py"
 

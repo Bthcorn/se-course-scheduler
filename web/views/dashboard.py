@@ -3,10 +3,8 @@ from web.views.base_page import BasePage
 
 
 class DashboardPage(BasePage):
-    """Dashboard page class"""
 
     def render(self):
-        """Render the Dashboard page"""
         st.title("SE Course Scheduler")
 
         # Available Rooms Section
