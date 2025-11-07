@@ -1,4 +1,4 @@
-:- consult('unsat_facts.pl').
+:- consult('facts.pl').
 
 :- dynamic course/3.
 :- dynamic professor/2.
@@ -14,6 +14,12 @@ room_available(Room, Day, TimeSlot) :-
 professor_available(ProfID, Day, TimeSlot) :-
     \+ scheduled(ProfID, _, Day, TimeSlot, _).
 
+year_available(CourseID, Day, TimeSlot) :-
+    course(CourseID, _, Year),
+    \+ (scheduled(_, _, Day, TimeSlot, OtherCourseID),
+        course(OtherCourseID, _, Year),
+        CourseID \= OtherCourseID).
+
 course_not_scheduled(CourseID) :-
     \+ scheduled(_, _, _, _, CourseID).
 
@@ -26,6 +32,7 @@ find_assignment(CourseID, ProfID, Room, Day, TimeSlot) :-
     room(Room, _),
     room_available(Room, Day, TimeSlot),
     professor_available(ProfID, Day, TimeSlot),
+    year_available(CourseID, Day, TimeSlot),
     course_not_scheduled(CourseID).
 
 find_preferred_assignment(CourseID, ProfID, Room, Day, TimeSlot) :-
@@ -44,12 +51,34 @@ clear_schedule :-
 
 % CSP scheduling for a single course - tries preferred first, then fallback
 % Used by MCV and Forward Checking algorithms
+% Clause 1: Try preferred assignment
 schedule_course_csp(CourseID, ProfID, Room, Day, TimeSlot) :-
     find_preferred_assignment(CourseID, ProfID, Room, Day, TimeSlot).
+
+
+schedule_course_csp(CourseID, ProfID, Room, Day, TimeSlot) :-
+    find_fallback_assignment(CourseID, ProfID, Room, Day, TimeSlot),
+    \+ would_block_preference(Room, Day, TimeSlot).
+
 
 schedule_course_csp(CourseID, ProfID, Room, Day, TimeSlot) :-
     find_fallback_assignment(CourseID, ProfID, Room, Day, TimeSlot).
 
+would_block_preference(Room, Day, TimeSlot) :-
+    professor(ProfID, _),
+    \+ scheduled(ProfID, _, _, _, _),  
+    prefers(ProfID, Day, TimeSlot),     
+    can_teach(ProfID, CourseID),        
+    course_not_scheduled(CourseID),     
+    \+ has_other_preference(ProfID, CourseID, Day, TimeSlot).  
+
+% Check if professor has other preferred slots available
+has_other_preference(ProfID, CourseID, BlockedDay, BlockedSlot) :-
+    prefers(ProfID, Day, TimeSlot),
+    (Day \= BlockedDay ; TimeSlot \= BlockedSlot),
+    room(R, _),
+    room_available(R, Day, TimeSlot),
+    professor_available(ProfID, Day, TimeSlot).
 
 
 
@@ -123,6 +152,3 @@ get_schedule(Schedule) :-
         ),
         Schedule
     ).
-
-
-

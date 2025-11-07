@@ -23,12 +23,12 @@ def main():
     elif result.get("status") == "partial_failure":
         unscheduled = result.get("unscheduled", [])
         print(
-            f"\n⚠️  Partially scheduled: {len(result['schedules'])}/{result['total']} courses"
+            f"\n! Partially scheduled: {len(result['schedules'])}/{result['total']} courses"
         )
-        print(f"  Failed to schedule: {', '.join(unscheduled)}")
+        print(f"  ! Failed to schedule: {', '.join(unscheduled)}")
     else:
         print(
-            f"\n✅ Successfully scheduled {len(result['schedules'])}/{result['total']} courses"
+            f"\n Successfully scheduled {len(result['schedules'])}/{result['total']} courses"
         )
         print(f"  Algorithm used: {result.get('algorithm_used', 'Unknown')}")
 

@@ -7,6 +7,24 @@ class DashboardPage(BasePage):
     def render(self):
         st.title("SE Course Scheduler")
 
+        # Available Rooms Section
+        st.subheader("Available Rooms")
+
+        # Get room data from Prolog
+        rooms_query = "room(RoomID, Capacity)"
+        rooms = list(self.scheduler.prolog.query(rooms_query))
+
+        # Display rooms as buttons/chips
+        if rooms:
+            cols = st.columns(len(rooms))
+            for idx, room_data in enumerate(rooms):
+                with cols[idx]:
+                    st.button(
+                        str(room_data["RoomID"]).upper(),
+                        key=f"room_btn_{idx}",
+                        use_container_width=True,
+                    )
+
         st.markdown("---")
 
         st.subheader("Course Data Overview")
@@ -46,7 +64,7 @@ class DashboardPage(BasePage):
         st.text("Upload your course information from Excel files (.xlsx, .xls)")
 
         uploaded_file = st.file_uploader(
-            label="Choose a file",
+            "Choose a file",
             type=["xlsx", "xls"],
             key="course_upload",
             label_visibility="collapsed",
